@@ -1,0 +1,88 @@
+{
+  "generated_utc": "2026-09-08T23:20:56.960077+00:00",
+  "scope": "deterministic finite model; no empirical model evaluation",
+  "results": {
+    "hardened": {
+      "harm_lower": 0,
+      "harm_upper": 0,
+      "witness": [
+        "approve",
+        "approve",
+        "approve",
+        "approve",
+        "approve",
+        "approve"
+      ],
+      "state_time_pairs": 144,
+      "horizon": 6
+    },
+    "unbound_payload": {
+      "harm_lower": 1,
+      "harm_upper": 1,
+      "witness": [
+        "approve",
+        "approve",
+        "approve",
+        "approve",
+        "mutate",
+        "release"
+      ],
+      "state_time_pairs": 198,
+      "horizon": 6
+    },
+    "replay_allowed": {
+      "harm_lower": 1,
+      "harm_upper": 1,
+      "witness": [
+        "approve",
+        "approve",
+        "approve",
+        "approve",
+        "release",
+        "release"
+      ],
+      "state_time_pairs": 177,
+      "horizon": 6
+    },
+    "reserve_unprotected": {
+      "harm_lower": 1,
+      "harm_upper": 1,
+      "witness": [
+        "approve",
+        "approve",
+        "approve",
+        "spend",
+        "spend",
+        "spend"
+      ],
+      "state_time_pairs": 159,
+      "horizon": 6
+    },
+    "delayed_effect_after_revocation": {
+      "harm_lower": 1,
+      "harm_upper": 1,
+      "witness": [
+        "approve",
+        "approve",
+        "approve",
+        "approve",
+        "approve",
+        "tick"
+      ],
+      "state_time_pairs": 13,
+      "horizon": 6
+    },
+    "progress_certificate": {
+      "done": "0",
+      "pending": "4"
+    }
+  },
+  "usage": {
+    "experiment_wall_seconds": 0.008959,
+    "python": "3.12.14",
+    "model_api_calls": 0,
+    "chatgpt_tokens": null,
+    "chatgpt_allowance_remaining": null,
+    "note": "ChatGPT account usage is not exposed; runtime covers this command only."
+  }
+}
