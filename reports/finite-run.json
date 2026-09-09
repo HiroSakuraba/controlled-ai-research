@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-09T14:34:48.382656+00:00",
+  "generated_utc": "2026-09-09T14:49:04.671585+00:00",
   "scope": "deterministic finite model; no empirical model evaluation",
   "results": {
     "hardened": {
@@ -1766,9 +1766,9 @@
       "delayed_certificate": {
         "trusted_bounds": {
           "done": "0",
-          "cleanup": "6",
+          "retry": "8",
           "job": "16",
-          "retry": "8"
+          "cleanup": "6"
         },
         "wait_rejected": true,
         "exhausted_rejected": true
@@ -1848,7 +1848,7 @@
     }
   },
   "usage": {
-    "experiment_wall_seconds": 0.160408,
+    "experiment_wall_seconds": 0.164303,
     "python": "3.12.14",
     "model_api_calls": 0,
     "chatgpt_tokens": null,
