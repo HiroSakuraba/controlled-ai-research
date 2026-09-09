@@ -1,0 +1,14 @@
+{
+  "schema": "controlled-ai-repro-v1",
+  "scope": "standard-library deterministic finite prototype; no model API calls",
+  "python": ">=3.10",
+  "commands": {
+    "test": "python3 -m unittest discover -s tests -v",
+    "report": "python3 -m controlled_ai > reports/finite-run.json",
+    "verify_report": "python3 tools/verify_report.py"
+  },
+  "recorded_artifact": "reports/finite-run.json",
+  "deterministic_exceptions": ["generated_utc", "usage.experiment_wall_seconds"],
+  "security_boundary": "docs/threat-model.md",
+  "experiment_protocol": "docs/model-experiment-protocol.md"
+}
