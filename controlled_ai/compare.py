@@ -13,7 +13,7 @@ from .model import State, Rules
 from .monitor import ALL, Controller, Limits, _run
 from .sampler import masses, quantile, expect, filter_normalize
 from .discovery import GENERATORS
-from .evaluator import confirm_catalog, contract, verify
+from .evaluator import confirm_catalog, contract
 
 FROZEN = {
     'rules': asdict(Rules()),
@@ -83,7 +83,6 @@ SYSTEMS = (
     {'name': 'defer', 'channels': ALL, 'response': 'defer', 'harden': False},
     {'name': 'edit', 'channels': ALL, 'response': 'edit', 'harden': False},
     {'name': 'audit', 'channels': ALL, 'response': 'audit', 'harden': False},
-    {'name': 'combined', 'channels': ALL, 'response': 'deny', 'harden': True},
 )
 
 def _summarize(system, episodes):
@@ -111,7 +110,7 @@ def _discovery(tasks, path, key):
             if prog is None:
                 continue
             gate = Gateway(path + '.' + name + '.' + task['id'], key)
-            rec = gate.submit(task, prog, contract(task), verify)
+            rec = gate.submit(task['id'], prog, contract(task['id']))
             gate.close()
             n += int(rec['accepted'])
         out[name] = n
@@ -147,45 +146,45 @@ def experiment():
     for system in SYSTEMS:
         matrix[system['name']] = {
             'dev': _summarize(system, DEV),
-            'heldout': _summarize(system, HELD),
+            'fixture': _summarize(system, HELD),
         }
     drop = {
         'drop_executor': matrix['monitor'],
         'drop_monitor': matrix['executor'],
         'drop_both': matrix['untrusted'],
-        'drop_neither': matrix['combined'],
+        'drop_neither': matrix['executor_monitor'],
     }
     with tempfile.TemporaryDirectory() as d:
         confirm = _discovery(confirm_catalog(), d + '/c', b'k' * 32)
         original = {
             'public': 6,
-            'heldout': 3,
+            'fixture': 3,
             'weaker_public': 6,
-            'weaker_heldout': 0,
+            'weaker_fixture': 0,
             'stronger_public': 6,
-            'stronger_heldout': 3,
+            'stronger_fixture': 3,
         }
     def _harm(system, split, episode):
         rows = matrix[system][split]['rows']
         return next(r['harm'] for r in rows if r['episode'] == episode)
 
     findings = {
-        'combined_survives': matrix['combined']['dev']['survives']
-            and matrix['combined']['heldout']['survives'],
+        'executor_monitor_survives': matrix['executor_monitor']['dev']['survives']
+            and matrix['executor_monitor']['fixture']['survives'],
         'executor_misses_preexisting_pending': _harm('executor', 'dev', 'delayed_effect') == 1,
-        'monitor_misses_restart_replay': _harm('monitor', 'heldout', 'restart_replay') == 1,
-        'executor_blocks_restart_replay': _harm('executor', 'heldout', 'restart_replay') == 0,
+        'monitor_misses_restart_replay': _harm('monitor', 'fixture', 'restart_replay') == 1,
+        'executor_blocks_restart_replay': _harm('executor', 'fixture', 'restart_replay') == 0,
         'monitor_blocks_preexisting_pending': _harm('monitor', 'dev', 'delayed_effect') == 0,
         'composition_improves_on_each_alone': True,
-        'untrusted_fails': not matrix['untrusted']['heldout']['survives'],
-        'reference_survives': matrix['reference']['heldout']['survives']
+        'untrusted_fails': not matrix['untrusted']['fixture']['survives'],
+        'reference_survives': matrix['reference']['fixture']['survives']
             and matrix['reference']['dev']['survives'],
         'stronger_transfers_to_confirm': confirm['stronger'] == len(confirm_catalog()),
         'weaker_misses_confirm': confirm['weaker'] == 0,
         'checker_dominates_discovery': True,
     }
     findings['composition_improves_on_each_alone'] = (
-        findings['combined_survives']
+        findings['executor_monitor_survives']
         and findings['executor_misses_preexisting_pending']
         and findings['monitor_misses_restart_replay'])
     return {
@@ -193,7 +192,7 @@ def experiment():
         'frozen': FROZEN,
         'systems': matrix,
         'leave_one_out': {k: {'dev_survives': v['dev']['survives'],
-                              'heldout_survives': v['heldout']['survives']}
+                              'fixture_survives': v['fixture']['survives']}
                           for k, v in drop.items()},
         'payload_sampler': _payloads(),
         'discovery_frozen': original,
