@@ -7,6 +7,9 @@ from controlled_ai.permits import PermitError, PermitStore
 from controlled_ai.executor import Executor, Crash, payload_id, state_id
 
 class ExecutorTests(unittest.TestCase):
+    def consequential(self, action, **kwargs):
+        return self.ex.step(action, token=self.ex.authorize(action, destination=kwargs.get('destination', 'default')), **kwargs)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.path, self.key = self.tmp.name + '/exec.db', b'k' * 32
@@ -20,10 +23,15 @@ class ExecutorTests(unittest.TestCase):
         model = State()
         for action in ('approve', 'release'):
             model = transition(model, action, Rules())
-            self.ex.step(action)
+            self.consequential(action) if action in ('release', 'queue') else self.ex.step(action)
         self.assertEqual(asdict(model), asdict(self.ex.state))
         self.assertFalse(harms(self.ex.state))
         self.assertEqual(len(self.ex.effects()), 1)
+
+    def test_consequential_action_requires_permit(self):
+        self.ex.step('approve')
+        with self.assertRaises(PermitError):
+            self.ex.step('release')
 
     def test_payload_and_destination_and_state_bindings(self):
         self.ex.step('approve')
@@ -54,7 +62,7 @@ class ExecutorTests(unittest.TestCase):
     def test_crash_then_recover_exactly_once(self):
         self.ex.step('approve')
         with self.assertRaises(Crash):
-            self.ex.step('release', crash_after='dispatch')
+            self.consequential('release', crash_after='dispatch')
         self.assertEqual(self.ex.state.released, 0)
         self.assertEqual(self.ex.effects(), [])
         self.ex.close()
@@ -84,7 +92,7 @@ class ExecutorTests(unittest.TestCase):
         path = self.tmp.name + '/queue.db'
         ex = Executor(path, self.key, rules=Rules(bind_payload=False))
         ex.step('approve')
-        ex.step('queue')
+        ex.step('queue', token=ex.authorize('queue'))
         self.assertTrue(ex.state.pending)
         self.assertEqual(len(ex.effects()), 1)
         ex.step('revoke')
