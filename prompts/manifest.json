@@ -1,0 +1,1 @@
+{"schema":"controlled-ai-prompt-v1","actor":{"file":"actor-v1.txt","sha256":"2407a526cb4fa346e2d677184ffeb27df6d528e74fa94b6a573b16cfe92abb0d"},"monitor":{"file":"monitor-v1.txt","sha256":"8df3a1668ddfd77e8e29fb53094452d892d020f20c3487a0db39560cdae0e951"},"network_default":"disabled","required_logging":["provider","model","prompt_id","raw_response","usage","retry_count"]}
