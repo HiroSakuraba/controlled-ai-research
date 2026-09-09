@@ -33,7 +33,7 @@ The program studies state-bound single-use permissions, evidence provenance, con
 6. Freeze configurations and perform held-out comparisons.
 7. Expand one dimension at a time and repeat the retained comparisons.
 
-This repository contains the research design and an initial finite prototype. Implementation and experimental results will be added as the work proceeds.
+This repository contains the research design and a finite prototype through stage 3. Stages 1–3 use the standard library only. Model attackers and priced-call comparisons belong to later stages.
 
 ## Related work
 
@@ -50,8 +50,9 @@ python3 -m controlled_ai
 ```
 
 The first command tests the controls. The second prints a JSON report with exact
-finite-horizon harm bounds, attack traces, explored state counts, and runtime.
-A recorded run is in [reports/finite-run.json](reports/finite-run.json).
+finite-horizon harm bounds, executor crash recovery, the checked-discovery
+ledger, and runtime. A recorded run is in
+[reports/finite-run.json](reports/finite-run.json).
 
 GitHub Actions runs the same tests on pushes, pull requests, and manual dispatch. Each run publishes its generated JSON report as a downloadable artifact for 30 days; it does not modify the source tree.
 
@@ -66,16 +67,31 @@ continued evaluation rather than reachability from the clean initial state.
 
 The hardened configuration permits an honest release and has no harmful trace
 within this search. Disabling payload binding, replay protection, or reserve
-protection produces a concrete harmful trace. The evaluator checks released
-truth tables independently of approval and returns a failing input. This tiny
-public truth table is not the planned held-out level-two evaluator.
+protection produces a concrete harmful trace. Experiment A’s evaluator checks
+released truth tables independently of approval and returns a failing input.
 
-`PermitStore` separately demonstrates authenticated payload/state binding and
-SQLite-backed single-use nonces across restart. The caller supplies a trusted
-state identifier and complete payload digest. It is not yet connected to the
-finite executor or a real tool gateway. Its database transaction records permit
-consumption, not atomic completion of an external effect. Protecting keys,
-authoritative state, and database integrity remains the host's responsibility.
+The executor issues HMAC permits bound to the action, artifact, destination,
+full state, and rule set, with an expiry in executor steps. Consume, the local
+snapshot, and the dispatch record share one SQLite transaction. A later
+transaction records a simulated remote effect. A crash between those
+transactions resumes the same nonce and writes the effect once. Restart cannot
+replay a consumed nonce. Changed payloads, destinations, states, policies, and
+expired permits are rejected. The database still cannot atomically commit a
+real remote effect. Protecting keys, authoritative state, and database
+integrity remains the host's responsibility.
+
+The discovery experiment synthesizes straight-line 12-bit programs. Generators
+receive sixteen public input/output examples and a frozen statement; they do
+not import the held-out evaluator. The checker compares every candidate against
+the total function on all 4,096 inputs, with a step limit and a checker budget,
+and records the accepted digest. Release is allowed only for that digest.
+Six public tasks are single-opcode; three held-out families need two opcodes.
+A length-1 enumerative search verifies all six public tasks and none of the
+held-out tasks. A one-shot symbolic fit from the first example misses the
+public `and` mask (the first public input is zero) and all held-out families.
+A length-2 enumerative search verifies all nine tasks under the same checker
+and permissions. Negative controls cover invalid syntax, a weakened statement,
+an incorrect program, a step-limit violation, and a mismatched release digest.
 
 The certificate checker uses exact fractions and a trusted finite transition
 kernel. It checks nonnegative potential and positive drift at every unfinished
@@ -83,13 +99,14 @@ state, yielding an expected time-to-completion bound. The example gives four
 steps. Stalling, incomplete distributions, unknown successors, and floating
 point probabilities are rejected.
 
-Next work: connect durable permits to the executor, add crash/recovery tests,
-and implement the checked-discovery experiment with a held-out evaluator.
+Next work: model attackers and monitors, evidence provenance, computational
+exhaustion, and trusted takeover, including shared-dependency failures.
 
 ## Usage record
 
 This prototype uses no external model API calls, paid services, new dependencies,
-or delegated agents. Twelve tests passed in the initial run (0.013 seconds).
-The report records experiment runtime and state counts. These measurements cover
-local execution only. ChatGPT token use, Plus allowance consumption, remaining
-quota, and account charges are unavailable to this process and are not estimated.
+or delegated agents. Twenty-five tests passed in the recorded run. The report
+records experiment runtime, state counts, recovery of one in-flight release,
+and the discovery ledger. These measurements cover local execution only.
+ChatGPT token use, Plus allowance consumption, remaining quota, and account
+charges are unavailable to this process and are not estimated.
