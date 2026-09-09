@@ -201,6 +201,10 @@ experiment protocol.
 - [Reproducibility manifest](reproducibility-manifest.json)
 - [Contributor guidance](CONTRIBUTING.md)
 - [Release checklist](docs/release-checklist.md)
+- [Entry point for future agents and contributors](docs/AI_AGENT_ENTRYPOINT.md)
+- [Historical no-go ledger](docs/HISTORICAL_NO_GO_LEDGER.md)
+- [Exploratory map](docs/EXPLORATORY_MAP.md)
+- [Citation metadata](CITATION.cff)
 
 For a clean local verification run: `make test`, `make verify`.
 
