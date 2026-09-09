@@ -41,6 +41,10 @@ class QuantileTests(unittest.TestCase):
         p = filter_normalize(masses(3), (True, True, False))
         self.assertEqual(p, (F(1, 2), F(1, 2), F(0)))
 
+    def test_permission_mask_length_must_match_menu(self):
+        with self.assertRaises(SamplerError):
+            filter_normalize(masses(3), (True, True))
+
     def test_spend_rejects_q_outside_remaining_A(self):
         self.assertEqual(spend(10, F(1, 10)), F(1))
         with self.assertRaises(SamplerError):
@@ -70,6 +74,15 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(s.A, F(10))
         self.assertEqual(Q, (F(1, 2), F(1, 2)))
         self.assertIn(choice, ('a', 'b'))
+        s.close()
+
+    def test_tampered_record_is_rejected(self):
+        s = Sampler(':memory:', A0=10, seed=0)
+        s.decide(('a', 'b'), masses(2), (1, 0), F(1, 2))
+        s.db.execute("UPDATE event SET choice=? WHERE step=0", ('\"forged\"',))
+        s.db.commit()
+        with self.assertRaises(SamplerError):
+            s.replay(0)
         s.close()
 
     def test_second_draw_after_spent_budget_must_be_reference(self):
