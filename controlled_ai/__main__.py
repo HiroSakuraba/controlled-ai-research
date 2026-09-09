@@ -8,6 +8,9 @@ from .solver import solve
 from .certificates import check
 from .executor import Executor, Crash
 from .discovery import experiment as discovery_experiment
+from .monitor import comparison as monitor_comparison, exhaustion as exhaustion_experiment
+from .provenance import experiment as provenance_experiment
+from .takeover import experiment as takeover_experiment
 
 def executor_recovery():
     with tempfile.TemporaryDirectory() as d:
@@ -44,6 +47,10 @@ def main():
     results['executor_recovery'] = executor_recovery()
     with tempfile.TemporaryDirectory() as d:
         results['discovery'] = discovery_experiment(d + '/disc', b'k' * 32)
+    results['monitor'] = monitor_comparison()
+    results['exhaustion'] = exhaustion_experiment()
+    results['provenance'] = provenance_experiment()
+    results['takeover'] = takeover_experiment()
     print(json.dumps({'generated_utc': datetime.now(timezone.utc).isoformat(),
                       'scope': 'deterministic finite model; no empirical model evaluation',
                       'results': results, 'usage': {
