@@ -70,7 +70,7 @@ within this search. Disabling payload binding, replay protection, or reserve
 protection produces a concrete harmful trace. Experiment A’s evaluator checks
 released truth tables independently of approval and returns a failing input.
 
-Consequential executor actions require an HMAC permit bound to the action, artifact, destination, full state, and rule set, with an expiry in executor steps. Consume, the local snapshot, and the dispatch record share one SQLite transaction. The local effects table deduplicates recovery by nonce. A real remote effect needs a receiver-side idempotency key and reconciliation: SQLite alone cannot provide exactly-once external delivery. Protecting keys, authoritative state, and database integrity remains the host's responsibility.
+Consequential executor actions require an HMAC permit from the separate trusted-issuer interface, bound to the action, artifact, destination, full state, and persisted rule set, with an expiry in executor steps. Consume, the local snapshot, and the dispatch record share one SQLite transaction. The local effects table deduplicates recovery by nonce. A real remote effect needs a receiver-side idempotency key and reconciliation: SQLite alone cannot provide exactly-once external delivery. The fixture uses a shared HMAC secret; production should replace it with a remote signer or public-key verifier. Protecting keys, authoritative state, and database integrity remains the host's responsibility.
 
 The discovery experiment synthesizes straight-line 12-bit programs. Generators receive sixteen public input/output examples and a frozen statement. The canonical evaluator resolves task identifiers itself, compares every candidate against the total function on all 4,096 inputs, and stores accepted task/digest pairs durably. Release is allowed only for a stored pair. This remains a same-process fixture; an independent checker in a real system must run under separate credentials. Six public tasks are single-opcode; three fixture families need two opcodes.
 A length-1 enumerative search verifies all six public tasks and none of the
@@ -160,6 +160,10 @@ review, takeover fixtures, sampler bounds, the frozen fixture
 comparison, and stage-7 expansions. These measurements cover local execution
 only. ChatGPT token use, Plus allowance consumption, remaining quota, and
 account charges are unavailable to this process and are not estimated.
+
+## Execution hardening
+
+The executor now persists the active policy and refuses a restart under different rules. It accepts permits only from the separate issuer interface, and produces signed state exports containing the policy digest, effects, and pending dispatches. Randomized differential tests compare it to the finite transition model. The [threat model](docs/threat-model.md) states the remaining host, external-effect, and evaluator-custody assumptions.
 
 ## API-free experiment infrastructure
 
