@@ -26,17 +26,17 @@ def _op(name, k, x):
 
 def _spec(seed, index):
     raw=hashlib.sha256((seed + ':' + str(index)).encode()).digest()
-    names=('xor','and','or','add','shl'); a,b=names[raw[0]%5],names[raw[1]%5]
-    ka,kb=IMMS[raw[2] % len(IMMS)],IMMS[raw[3] % len(IMMS)]
-    return a,ka,b,kb
+    names=('xor','and','or','add','shl'); length=1 + raw[0] % 3
+    return tuple((names[raw[1+i] % len(names)], IMMS[raw[8+i] % len(IMMS)]) for i in range(length))
 
 def _target(seed,index,x):
-    a,ka,b,kb=_spec(seed,index); return _op(b,kb,_op(a,ka,x))
+    for op,k in _spec(seed,index): x=_op(op,k,x)
+    return x
 def _task_id(seed,index): return 'task-' + hashlib.sha256((seed + ':' + str(index)).encode()).hexdigest()[:20]
 
 def _manifest(seed,index):
     return {'task_id':_task_id(seed,index),'suite_commitment':hashlib.sha256(seed.encode()).hexdigest(),
-            'index':index,'width':WIDTH,'domain':DOMAIN,'examples':[(x,_target(seed,index,x)) for x in PUBLIC_XS],
+            'index':index,'family':'composition-' + str(len(_spec(seed,index))),'width':WIDTH,'domain':DOMAIN,'examples':[(x,_target(seed,index,x)) for x in PUBLIC_XS],
             'statement':'total 12-bit function; examples are not the specification','checker_version':CHECKER_VERSION,'checker_digest':CHECKER_DIGEST}
 
 def _verify_program(seed, manifest, program, claimed):
