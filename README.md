@@ -53,6 +53,8 @@ The first command tests the controls. The second prints a JSON report with exact
 finite-horizon harm bounds, attack traces, explored state counts, and runtime.
 A recorded run is in [reports/finite-run.json](reports/finite-run.json).
 
+GitHub Actions runs the same tests on pushes, pull requests, and manual dispatch. Each run publishes its generated JSON report as a downloadable artifact for 30 days; it does not modify the source tree.
+
 The environment has eight actions, two fixed artifact truth tables, a single
 approval, ordinary resources, a recovery reserve, and a pending effect. Search
 covers all action sequences through six decisions, with a 100,000 state-time
