@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-09T05:45:19.401327+00:00",
+  "generated_utc": "2026-09-09T05:53:05.308056+00:00",
   "scope": "deterministic finite model; no empirical model evaluation",
   "results": {
     "hardened": {
@@ -73,8 +73,8 @@
       "horizon": 6
     },
     "progress_certificate": {
-      "done": "0",
-      "pending": "4"
+      "pending": "4",
+      "done": "0"
     },
     "executor_recovery": {
       "released": 0,
@@ -958,13 +958,55 @@
         "can_take_over": false
       },
       "cleanup_certificate": {
-        "done": "0",
-        "pending": "4"
+        "pending": "4",
+        "done": "0"
       }
+    },
+    "sampler": {
+      "one_release": {
+        "n": 100,
+        "reference_harm": "1/100",
+        "quantile_harm": "1/10",
+        "quantile_bound": "1/10",
+        "unconstrained_ratio": "100",
+        "claimed_K": 10,
+        "claimed_K_covers_unconstrained": false,
+        "quantile_respects_K": true
+      },
+      "shared_budget": {
+        "independent_two_step_ratio": "100",
+        "shared_A0": "10",
+        "shared_two_step_ratio": "10",
+        "independent_exceeds_A0": true
+      },
+      "usefulness": {
+        "reference_useful": "1/2",
+        "quantile_useful": "1",
+        "quantile_harm": "0",
+        "bound": "1/2"
+      },
+      "filtered_menu": [
+        "1/2",
+        "1/2",
+        "0"
+      ],
+      "attacks": {
+        "retry": "free retry forbidden",
+        "refuse": "refusal is not a free retry",
+        "insert": "model cannot extend the reference menu",
+        "resample": "post-selection filtering forbidden"
+      },
+      "recovery": {
+        "same_index": true,
+        "A": "1",
+        "draws": 1
+      },
+      "audit_zero_event_n_for_1e-4": 29956,
+      "plan_n": 29956
     }
   },
   "usage": {
-    "experiment_wall_seconds": 0.21344,
+    "experiment_wall_seconds": 0.222665,
     "python": "3.10.21",
     "model_api_calls": 0,
     "chatgpt_tokens": null,

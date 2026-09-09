@@ -33,7 +33,7 @@ The program studies state-bound single-use permissions, evidence provenance, con
 6. Freeze configurations and perform held-out comparisons.
 7. Expand one dimension at a time and repeat the retained comparisons.
 
-This repository contains the research design and a finite prototype through stage 4. Stages 1–4 use the standard library only. Learned monitors, model attackers, and priced-call comparisons belong to later stages.
+This repository contains the research design and a finite prototype through stage 5. Stages 1–5 use the standard library only. Learned monitors, model attackers, and priced-call comparisons belong to later stages.
 
 ## Related work
 
@@ -123,16 +123,31 @@ release and cancels the pending job under cancel-on-revoke. Wiping a shared
 database drops both paths. Spending the recovery reserve makes takeover
 unavailable.
 
-Next work: implement the shared probability budget and evaluate its reference
-process. Model attackers and learned monitors remain out of this stdlib
-prototype.
+The finite-menu sampler uses exact rationals. Menus are complete executable
+choices, not operation names. Uniform selection among one hundred artifacts,
+one harmful, has reference harm 1/100. An unconstrained selector that picks
+the harmful artifact has likelihood ratio 100; a claimed factor-ten bound
+fails. Weighted quantile selection at q = 1/10 keeps harm at 1/10. Two
+independent q = 1/10 draws permit joint ratio 100; a shared remaining
+amplification A0 = 10 forces the second draw to the reference and keeps the
+joint ratio at 10. An honest ranking raises useful completion inside the
+same bound. Permission filtering runs before normalization. Free retries,
+refusal of the recorded draw, post-selection filtering, and insertion into
+the reference menu are rejected. A crash after the recorded draw resumes
+that index; a different RNG does not redraw. Invalid scores fall back to the
+reference (q = 1). The zero-event 95% sample size for p_upper = 10^{-4} is
+29,956, matching the plan.
+
+Next work: freeze configurations and perform held-out confirmatory
+comparisons (stage 6). Model attackers and learned monitors remain out of
+this stdlib prototype.
 
 ## Usage record
 
 This prototype uses no external model API calls, paid services, new dependencies,
-or delegated agents. Thirty-eight tests passed in the recorded run. The report
+or delegated agents. Fifty-one tests passed in the recorded run. The report
 records experiment runtime, state counts, recovery of one in-flight release,
 the discovery ledger, monitor complementarity, exhaustion caps, provenance
-review, and takeover fixtures. These measurements cover local execution only.
-ChatGPT token use, Plus allowance consumption, remaining quota, and account
-charges are unavailable to this process and are not estimated.
+review, takeover fixtures, and sampler bounds. These measurements cover local
+execution only. ChatGPT token use, Plus allowance consumption, remaining quota,
+and account charges are unavailable to this process and are not estimated.
