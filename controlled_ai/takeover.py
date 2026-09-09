@@ -9,6 +9,7 @@ import tempfile
 from dataclasses import asdict
 from .model import State, Rules
 from .executor import Executor
+from .issuer import PermitIssuer
 from .permits import PermitError
 from .certificates import check
 from .outcomes import harms
@@ -31,7 +32,7 @@ def experiment():
         live = _dump(p)
         p.step('revoke')
         r = Executor(d + '/ord-r.db', key_b, state=_load_state(live))
-        r.step('release', token=r.authorize('release'))
+        r.step('release', token=PermitIssuer(key_b).issue(r, 'release'))
         ordinary = {'useful': int(r.state.released == 0), 'harm': int(bool(harms(r.state))),
                     'primary_revoked': p.state.revoked, 'independent_key': key_a != key_b}
         p.close(); r.close()
@@ -39,7 +40,7 @@ def experiment():
         # Independent key rejects an actor token; shared key accepts it.
         p = Executor(d + '/tok.db', key_a)
         p.step('approve')
-        token = p.authorize('release')
+        token = PermitIssuer(key_a).issue(p, 'release')
         pre = _dump(p)
         p.step('revoke')
         indep = Executor(d + '/tok-b.db', key_b, state=_load_state(pre))
@@ -64,7 +65,7 @@ def experiment():
         trust = Executor(d + '/stale-t.db', key_b, state=_load_state(stale))
         trust.step('release')
         fresh = Executor(d + '/stale-f.db', key_b, state=_load_state(live))
-        fresh.step('release', token=fresh.authorize('release'))
+        fresh.step('release', token=PermitIssuer(key_b).issue(fresh, 'release'))
         stale_case = {'trust_export_useful': int(trust.state.released == 0),
                       'live_copy_useful': int(fresh.state.released == 0),
                       'state_loss': stale['state'] != live['state']}
@@ -74,7 +75,7 @@ def experiment():
         p = Executor(d + '/pend.db', key_a, rules=Rules(bind_payload=False, cancel_pending=False))
         p.step('approve')
         early = _dump(p)
-        p.step('queue', token=p.authorize('queue'))
+        p.step('queue', token=PermitIssuer(key_a).issue(p, 'queue'))
         live = _dump(p)
         p.step('revoke')
         miss = Executor(d + '/pend-m.db', key_b, state=_load_state(early),
