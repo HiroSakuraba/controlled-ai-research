@@ -19,33 +19,32 @@ class DiscoveryTests(unittest.TestCase):
         }
         by_id = {t['id']: t for t in catalog()}
         for task_id, prog in programs.items():
-            fn = by_id[task_id]['fn']
-            for x in (0, 1, 7, 31, 128, 4095):
-                self.assertEqual(interpret(prog, x)[0], fn(x))
+            rec = verify(task_id, prog, contract(task_id))
+            self.assertTrue(rec['accepted'], task_id)
 
     def test_checker_rejects_example_only_fit(self):
         task = next(t for t in catalog() if t['id'] == 'pub-xor-1')
         claimed = contract(task)
-        rec = verify(task, (('and', 15),), claimed)
+        rec = verify(task['id'], (('and', 15),), claimed)
         self.assertFalse(rec['accepted'])
         self.assertEqual(rec['reason'], 'incorrect')
-        rec = verify(task, (('xor', 1),), claimed)
+        rec = verify(task['id'], (('xor', 1),), claimed)
         self.assertTrue(rec['accepted'])
         self.assertEqual(rec['evals'], DOMAIN)
 
     def test_weaker_misses_held_out_two_op_families(self):
-        held = next(t for t in catalog() if t['split'] == 'heldout')
+        held = next(t for t in catalog() if t['split'] == 'fixture')
         prog, _ = enumerate_bounded(held['examples'], 1)
         self.assertIsNone(prog)
         prog, _ = enumerate_bounded(held['examples'], 2)
         self.assertIsNotNone(prog)
-        rec = verify(held, prog, contract(held))
+        rec = verify(held['id'], prog, contract(held['id']))
         self.assertTrue(rec['accepted'])
 
     def test_symbolic_fits_single_op_only(self):
         pub = next(t for t in catalog() if t['id'] == 'pub-xor-1')
         prog, _ = symbolic_fit(pub['examples'])
-        self.assertTrue(verify(pub, prog, contract(pub))['accepted'])
+        self.assertTrue(verify(pub['id'], prog, contract(pub['id']))['accepted'])
         held = next(t for t in catalog() if t['id'] == 'hold-xor-and')
         prog, _ = symbolic_fit(held['examples'])
         self.assertIsNone(prog)
@@ -56,10 +55,10 @@ class DiscoveryTests(unittest.TestCase):
         weaker = report['generators']['weaker']
         stronger = report['generators']['stronger']
         self.assertEqual(weaker['verified_public'], weaker['public_tasks'])
-        self.assertEqual(weaker['verified_heldout'], 0)
+        self.assertEqual(weaker['verified_fixture'], 0)
         self.assertEqual(stronger['verified_public'], stronger['public_tasks'])
-        self.assertEqual(stronger['verified_heldout'], stronger['heldout_tasks'])
-        self.assertGreater(stronger['verified_heldout'], weaker['verified_heldout'])
+        self.assertEqual(stronger['verified_fixture'], stronger['fixture_tasks'])
+        self.assertGreater(stronger['verified_fixture'], weaker['verified_fixture'])
         neg = report['negative_controls']
         self.assertEqual(neg['invalid_syntax'], 'invalid_syntax')
         self.assertEqual(neg['weakened_statement'], 'statement_mismatch')
@@ -69,16 +68,31 @@ class DiscoveryTests(unittest.TestCase):
         self.assertTrue(neg['checked_release'])
         self.assertEqual(neg['step_limit'], 'step_limit')
 
+    def test_canonical_registry_rejects_forged_task(self):
+        forged = {'id': 'forged', 'examples': [(0, 0)]}
+        self.assertEqual(verify(forged['id'], (('xor', 0),), contract('pub-xor-1'))['reason'], 'unknown_task')
+
+    def test_accepted_digest_survives_gateway_restart(self):
+        task = next(t for t in catalog() if t['id'] == 'pub-xor-1')
+        with tempfile.TemporaryDirectory() as d:
+            path = d + '/g.db'
+            gate = Gateway(path, b'k' * 32)
+            rec = gate.submit(task['id'], (('xor', 1),), contract(task['id']))
+            gate.close()
+            reopened = Gateway(path, b'k' * 32)
+            self.assertEqual(reopened.release(task['id'], rec['digest']), rec['digest'])
+            reopened.close()
+
     def test_unchecked_digest_has_no_release_path(self):
         task = next(t for t in catalog() if t['id'] == 'pub-xor-1')
         with tempfile.TemporaryDirectory() as d:
             gate = Gateway(d + '/g.db', b'k' * 32)
             with self.assertRaises(PermitError):
-                gate.release('abc')
-            rec = gate.submit(task, [('bad',)], contract(task), verify)
+                gate.release(task['id'], 'abc')
+            rec = gate.submit(task['id'], [('bad',)], contract(task['id']))
             self.assertFalse(rec['accepted'])
             with self.assertRaises(PermitError):
-                gate.release('abc')
+                gate.release(task['id'], 'abc')
             gate.close()
 
 if __name__ == '__main__':
