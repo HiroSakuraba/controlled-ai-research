@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this prototype or research plan, please cite it."
+title: "Controlling Advanced AI: finite prototype and research plan"
+authors:
+  - family-names: Schulz
+    given-names: Benjamin John
+repository-code: "https://github.com/HiroSakuraba/controlled-ai-research"
+license: "MIT"
+type: software
+version: "0.1.0"
+date-released: "2026-09-09"
+abstract: "A standard-library finite prototype for controlled AI execution, independent checking, adversarial testing, and reproducible episode records."
