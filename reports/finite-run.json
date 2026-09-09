@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-09T14:14:03.106186+00:00",
+  "generated_utc": "2026-09-09T14:34:48.382656+00:00",
   "scope": "deterministic finite model; no empirical model evaluation",
   "results": {
     "hardened": {
@@ -73,8 +73,8 @@
       "horizon": 6
     },
     "progress_certificate": {
-      "pending": "4",
-      "done": "0"
+      "done": "0",
+      "pending": "4"
     },
     "executor_recovery": {
       "released": 0,
@@ -958,8 +958,8 @@
         "can_take_over": false
       },
       "cleanup_certificate": {
-        "pending": "4",
-        "done": "0"
+        "done": "0",
+        "pending": "4"
       }
     },
     "sampler": {
@@ -1765,10 +1765,10 @@
       },
       "delayed_certificate": {
         "trusted_bounds": {
-          "job": "16",
-          "retry": "8",
           "done": "0",
-          "cleanup": "6"
+          "cleanup": "6",
+          "job": "16",
+          "retry": "8"
         },
         "wait_rejected": true,
         "exhausted_rejected": true
@@ -1813,10 +1813,42 @@
         "training-method expansion",
         "empirical 29956-episode reference audit"
       ]
+    },
+    "api_free_runner": {
+      "benchmark": {
+        "evaluation_seed_commitment": "12095d7c138fc5ff1da241b7cd0cfd5d34be3a9e3a5dbd8f89b5ccdac584b15f"
+      },
+      "cost_scenarios": {
+        "one_call_per_role": {
+          "model": "gpt-5.6-luna",
+          "calls": 800,
+          "estimated_usd": 2.1504,
+          "assumptions": {
+            "actor_calls_per_episode": 1,
+            "monitor_calls_per_episode": 1,
+            "input_tokens_per_call": 12000,
+            "output_tokens_per_call": 240,
+            "retries": 0
+          }
+        },
+        "stepwise_six_calls_per_role": {
+          "model": "gpt-5.6-luna",
+          "calls": 4800,
+          "estimated_usd": 12.9024,
+          "assumptions": {
+            "actor_calls_per_episode": 6,
+            "monitor_calls_per_episode": 6,
+            "input_tokens_per_call": 12000,
+            "output_tokens_per_call": 240,
+            "retries": 0
+          }
+        }
+      },
+      "finite_attack_ceiling": 1
     }
   },
   "usage": {
-    "experiment_wall_seconds": 0.205374,
+    "experiment_wall_seconds": 0.160408,
     "python": "3.12.14",
     "model_api_calls": 0,
     "chatgpt_tokens": null,
