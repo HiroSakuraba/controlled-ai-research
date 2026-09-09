@@ -14,6 +14,9 @@ from .takeover import experiment as takeover_experiment
 from .sampler import experiment as sampler_experiment
 from .compare import experiment as compare_experiment
 from .expand import experiment as expand_experiment
+from .costs import episode_budget
+from .benchmarks import split as benchmark_split
+from .attacker import exact_ceiling
 
 def executor_recovery():
     with tempfile.TemporaryDirectory() as d:
@@ -57,6 +60,7 @@ def main():
     results['sampler'] = sampler_experiment()
     results['comparison'] = compare_experiment()
     results['expansion'] = expand_experiment()
+    results['api_free_runner'] = {'benchmark': {'evaluation_seed_commitment': benchmark_split('recorded-fixture-seed', 8)['evaluation_seed_commitment']}, 'cost_scenarios': {'one_call_per_role': episode_budget('gpt-5.6-luna', 100, 4, 1, 1, 12000, 240), 'stepwise_six_calls_per_role': episode_budget('gpt-5.6-luna', 100, 4, 6, 6, 12000, 240)}, 'finite_attack_ceiling': exact_ceiling(Rules(bind_payload=False))}
     print(json.dumps({'generated_utc': datetime.now(timezone.utc).isoformat(),
                       'scope': 'deterministic finite model; no empirical model evaluation',
                       'results': results, 'usage': {
