@@ -5,10 +5,11 @@ from controlled_ai.model import State, Rules, transition
 from controlled_ai.outcomes import harms
 from controlled_ai.permits import PermitError, PermitStore
 from controlled_ai.executor import Executor, Crash, payload_id, state_id
+from controlled_ai.issuer import PermitIssuer
 
 class ExecutorTests(unittest.TestCase):
     def consequential(self, action, **kwargs):
-        return self.ex.step(action, token=self.ex.authorize(action, destination=kwargs.get('destination', 'default')), **kwargs)
+        return self.ex.step(action, token=PermitIssuer(self.key).issue(self.ex, action, destination=kwargs.get('destination', 'default')), **kwargs)
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -35,7 +36,7 @@ class ExecutorTests(unittest.TestCase):
 
     def test_payload_and_destination_and_state_bindings(self):
         self.ex.step('approve')
-        token = self.ex.authorize('release')
+        token = PermitIssuer(self.key).issue(self.ex, 'release')
         with self.assertRaises(PermitError):
             self.ex.step('release', token=token, destination='other')
         self.ex.step('spend')
@@ -44,14 +45,14 @@ class ExecutorTests(unittest.TestCase):
 
     def test_expired_permit(self):
         self.ex.step('approve')
-        token = self.ex.authorize('release', ttl=1)
+        token = PermitIssuer(self.key).issue(self.ex, 'release', ttl=1)
         self.ex.step('approve')
         with self.assertRaises(PermitError):
             self.ex.step('release', token=token)
 
     def test_policy_change_invalidates_permit(self):
         self.ex.step('approve')
-        token = self.ex.authorize('release')
+        token = PermitIssuer(self.key).issue(self.ex, 'release')
         payload = payload_id('release', 0)
         pre = state_id(self.ex.state, self.ex.rules)
         other = state_id(self.ex.state, Rules(bind_payload=False))
@@ -76,7 +77,7 @@ class ExecutorTests(unittest.TestCase):
 
     def test_restart_cannot_replay_nonce(self):
         self.ex.step('approve')
-        token = self.ex.authorize('release')
+        token = PermitIssuer(self.key).issue(self.ex, 'release')
         payload = payload_id('release', 0)
         pre = state_id(self.ex.state, self.ex.rules)
         clock = self.ex.clock
@@ -92,7 +93,7 @@ class ExecutorTests(unittest.TestCase):
         path = self.tmp.name + '/queue.db'
         ex = Executor(path, self.key, rules=Rules(bind_payload=False))
         ex.step('approve')
-        ex.step('queue', token=ex.authorize('queue'))
+        ex.step('queue', token=PermitIssuer(self.key).issue(ex, 'queue'))
         self.assertTrue(ex.state.pending)
         self.assertEqual(len(ex.effects()), 1)
         ex.step('revoke')
