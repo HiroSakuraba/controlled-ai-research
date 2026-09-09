@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-09T13:52:16.724740+00:00",
+  "generated_utc": "2026-09-09T14:14:03.106186+00:00",
   "scope": "deterministic finite model; no empirical model evaluation",
   "results": {
     "hardened": {
@@ -73,8 +73,8 @@
       "horizon": 6
     },
     "progress_certificate": {
-      "done": "0",
-      "pending": "4"
+      "pending": "4",
+      "done": "0"
     },
     "executor_recovery": {
       "released": 0,
@@ -93,15 +93,13 @@
           "tried_total": 711,
           "checker_evals": 24576,
           "verified_public": 6,
-          "verified_heldout": 0,
+          "verified_fixture": 0,
           "public_tasks": 6,
-          "heldout_tasks": 3,
+          "fixture_tasks": 3,
           "released": 6,
           "rows": [
             {
               "task": "pub-xor-1",
-              "split": "public",
-              "family": "xor_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "050683a82dd33261e32f3246d23812e648685982a15c595757cca346511c11d2",
@@ -114,13 +112,13 @@
                   1
                 ]
               ],
+              "split": "public",
+              "family": "xor_const",
               "tried": 46,
               "released": true
             },
             {
               "task": "pub-and-15",
-              "split": "public",
-              "family": "and_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "115ce27a18d6d1c55a9d95408acd453340d7eb1ae6fb913f046722b803c0c3ad",
@@ -133,13 +131,13 @@
                   15
                 ]
               ],
+              "split": "public",
+              "family": "and_const",
               "tried": 11,
               "released": true
             },
             {
               "task": "pub-or-8",
-              "split": "public",
-              "family": "or_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "6bfdb05ceb2901697b886e26699dee65596059e2536f28d0c87507dba727a660",
@@ -152,13 +150,13 @@
                   8
                 ]
               ],
+              "split": "public",
+              "family": "or_const",
               "tried": 31,
               "released": true
             },
             {
               "task": "pub-add-3",
-              "split": "public",
-              "family": "add_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "46bddbea0a23f0d3aad1265f02a3e199ebbe894ef6a1ec57b74d28a81b695f91",
@@ -171,13 +169,13 @@
                   3
                 ]
               ],
+              "split": "public",
+              "family": "add_const",
               "tried": 70,
               "released": true
             },
             {
               "task": "pub-shl-2",
-              "split": "public",
-              "family": "shl",
               "accepted": true,
               "reason": "equivalent",
               "digest": "76d39df1e8f17c4f3ad95110d6acffc1d9face5f03fe825a83e21aa2630348d9",
@@ -190,13 +188,13 @@
                   2
                 ]
               ],
+              "split": "public",
+              "family": "shl",
               "tried": 91,
               "released": true
             },
             {
               "task": "pub-not",
-              "split": "public",
-              "family": "not",
               "accepted": true,
               "reason": "equivalent",
               "digest": "910b3010f927ac44be43a0bcc9741577c679972dadc1c7935f7054ffcd8ae5bb",
@@ -209,12 +207,14 @@
                   4095
                 ]
               ],
+              "split": "public",
+              "family": "not",
               "tried": 66,
               "released": true
             },
             {
               "task": "hold-xor-and",
-              "split": "heldout",
+              "split": "fixture",
               "family": "xor_then_and",
               "accepted": false,
               "reason": "no_candidate",
@@ -227,7 +227,7 @@
             },
             {
               "task": "hold-add-xor",
-              "split": "heldout",
+              "split": "fixture",
               "family": "add_then_xor",
               "accepted": false,
               "reason": "no_candidate",
@@ -240,7 +240,7 @@
             },
             {
               "task": "hold-shl-or",
-              "split": "heldout",
+              "split": "fixture",
               "family": "shl_then_or",
               "accepted": false,
               "reason": "no_candidate",
@@ -257,15 +257,13 @@
           "tried_total": 85,
           "checker_evals": 20480,
           "verified_public": 5,
-          "verified_heldout": 0,
+          "verified_fixture": 0,
           "public_tasks": 6,
-          "heldout_tasks": 3,
+          "fixture_tasks": 3,
           "released": 5,
           "rows": [
             {
               "task": "pub-xor-1",
-              "split": "public",
-              "family": "xor_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "050683a82dd33261e32f3246d23812e648685982a15c595757cca346511c11d2",
@@ -278,6 +276,8 @@
                   1
                 ]
               ],
+              "split": "public",
+              "family": "xor_const",
               "tried": 1,
               "released": true
             },
@@ -296,8 +296,6 @@
             },
             {
               "task": "pub-or-8",
-              "split": "public",
-              "family": "or_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "6bfdb05ceb2901697b886e26699dee65596059e2536f28d0c87507dba727a660",
@@ -310,13 +308,13 @@
                   8
                 ]
               ],
+              "split": "public",
+              "family": "or_const",
               "tried": 3,
               "released": true
             },
             {
               "task": "pub-add-3",
-              "split": "public",
-              "family": "add_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "46bddbea0a23f0d3aad1265f02a3e199ebbe894ef6a1ec57b74d28a81b695f91",
@@ -329,13 +327,13 @@
                   3
                 ]
               ],
+              "split": "public",
+              "family": "add_const",
               "tried": 4,
               "released": true
             },
             {
               "task": "pub-shl-2",
-              "split": "public",
-              "family": "shl",
               "accepted": true,
               "reason": "equivalent",
               "digest": "76d39df1e8f17c4f3ad95110d6acffc1d9face5f03fe825a83e21aa2630348d9",
@@ -348,13 +346,13 @@
                   2
                 ]
               ],
+              "split": "public",
+              "family": "shl",
               "tried": 8,
               "released": true
             },
             {
               "task": "pub-not",
-              "split": "public",
-              "family": "not",
               "accepted": true,
               "reason": "equivalent",
               "digest": "910b3010f927ac44be43a0bcc9741577c679972dadc1c7935f7054ffcd8ae5bb",
@@ -367,12 +365,14 @@
                   4095
                 ]
               ],
+              "split": "public",
+              "family": "not",
               "tried": 1,
               "released": true
             },
             {
               "task": "hold-xor-and",
-              "split": "heldout",
+              "split": "fixture",
               "family": "xor_then_and",
               "accepted": false,
               "reason": "no_candidate",
@@ -385,7 +385,7 @@
             },
             {
               "task": "hold-add-xor",
-              "split": "heldout",
+              "split": "fixture",
               "family": "add_then_xor",
               "accepted": false,
               "reason": "no_candidate",
@@ -398,7 +398,7 @@
             },
             {
               "task": "hold-shl-or",
-              "split": "heldout",
+              "split": "fixture",
               "family": "shl_then_or",
               "accepted": false,
               "reason": "no_candidate",
@@ -415,15 +415,13 @@
           "tried_total": 23016,
           "checker_evals": 36864,
           "verified_public": 6,
-          "verified_heldout": 3,
+          "verified_fixture": 3,
           "public_tasks": 6,
-          "heldout_tasks": 3,
+          "fixture_tasks": 3,
           "released": 9,
           "rows": [
             {
               "task": "pub-xor-1",
-              "split": "public",
-              "family": "xor_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "050683a82dd33261e32f3246d23812e648685982a15c595757cca346511c11d2",
@@ -436,13 +434,13 @@
                   1
                 ]
               ],
+              "split": "public",
+              "family": "xor_const",
               "tried": 46,
               "released": true
             },
             {
               "task": "pub-and-15",
-              "split": "public",
-              "family": "and_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "115ce27a18d6d1c55a9d95408acd453340d7eb1ae6fb913f046722b803c0c3ad",
@@ -455,13 +453,13 @@
                   15
                 ]
               ],
+              "split": "public",
+              "family": "and_const",
               "tried": 11,
               "released": true
             },
             {
               "task": "pub-or-8",
-              "split": "public",
-              "family": "or_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "6bfdb05ceb2901697b886e26699dee65596059e2536f28d0c87507dba727a660",
@@ -474,13 +472,13 @@
                   8
                 ]
               ],
+              "split": "public",
+              "family": "or_const",
               "tried": 31,
               "released": true
             },
             {
               "task": "pub-add-3",
-              "split": "public",
-              "family": "add_const",
               "accepted": true,
               "reason": "equivalent",
               "digest": "46bddbea0a23f0d3aad1265f02a3e199ebbe894ef6a1ec57b74d28a81b695f91",
@@ -493,13 +491,13 @@
                   3
                 ]
               ],
+              "split": "public",
+              "family": "add_const",
               "tried": 70,
               "released": true
             },
             {
               "task": "pub-shl-2",
-              "split": "public",
-              "family": "shl",
               "accepted": true,
               "reason": "equivalent",
               "digest": "76d39df1e8f17c4f3ad95110d6acffc1d9face5f03fe825a83e21aa2630348d9",
@@ -512,13 +510,13 @@
                   2
                 ]
               ],
+              "split": "public",
+              "family": "shl",
               "tried": 91,
               "released": true
             },
             {
               "task": "pub-not",
-              "split": "public",
-              "family": "not",
               "accepted": true,
               "reason": "equivalent",
               "digest": "910b3010f927ac44be43a0bcc9741577c679972dadc1c7935f7054ffcd8ae5bb",
@@ -531,13 +529,13 @@
                   4095
                 ]
               ],
+              "split": "public",
+              "family": "not",
               "tried": 66,
               "released": true
             },
             {
               "task": "hold-xor-and",
-              "split": "heldout",
-              "family": "xor_then_and",
               "accepted": true,
               "reason": "equivalent",
               "digest": "b9bc72b0b17fadaa5aa02fa25f1ff4b32c43dae6599ad8f0bbc79c9e50e74936",
@@ -554,13 +552,13 @@
                   1
                 ]
               ],
+              "split": "fixture",
+              "family": "xor_then_and",
               "tried": 1498,
               "released": true
             },
             {
               "task": "hold-add-xor",
-              "split": "heldout",
-              "family": "add_then_xor",
               "accepted": true,
               "reason": "equivalent",
               "digest": "8ac99017c82f56680b2e5ac73ecb5dcd179c5dcc0fed527bc9defe2a2ea0dc9c",
@@ -577,13 +575,13 @@
                   8
                 ]
               ],
+              "split": "fixture",
+              "family": "add_then_xor",
               "tried": 9293,
               "released": true
             },
             {
               "task": "hold-shl-or",
-              "split": "heldout",
-              "family": "shl_then_or",
               "accepted": true,
               "reason": "equivalent",
               "digest": "4eac49424cbdef7eb20689ea2a3e8c2f791068dc3decdfcafc07f91c813c7a99",
@@ -600,6 +598,8 @@
                   7
                 ]
               ],
+              "split": "fixture",
+              "family": "shl_then_or",
               "tried": 11910,
               "released": true
             }
@@ -958,8 +958,8 @@
         "can_take_over": false
       },
       "cleanup_certificate": {
-        "done": "0",
-        "pending": "4"
+        "pending": "4",
+        "done": "0"
       }
     },
     "sampler": {
@@ -1076,7 +1076,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 0,
@@ -1156,7 +1156,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 4,
@@ -1236,7 +1236,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 0,
@@ -1316,7 +1316,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 1,
@@ -1396,7 +1396,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 0,
@@ -1476,7 +1476,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 1,
@@ -1556,7 +1556,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 1,
@@ -1636,7 +1636,7 @@
               }
             ]
           },
-          "heldout": {
+          "fixture": {
             "honest_useful": 1,
             "honest_n": 1,
             "attack_harm": 1,
@@ -1675,104 +1675,24 @@
               }
             ]
           }
-        },
-        "combined": {
-          "dev": {
-            "honest_useful": 1,
-            "honest_n": 1,
-            "attack_harm": 0,
-            "attack_n": 4,
-            "survives": true,
-            "rows": [
-              {
-                "episode": "honest",
-                "harm": 0,
-                "useful": 1,
-                "pending": false
-              },
-              {
-                "episode": "unbound_payload",
-                "harm": 0,
-                "useful": 0,
-                "pending": false
-              },
-              {
-                "episode": "replay_allowed",
-                "harm": 0,
-                "useful": 1,
-                "pending": false
-              },
-              {
-                "episode": "reserve_unprotected",
-                "harm": 0,
-                "useful": 0,
-                "pending": false
-              },
-              {
-                "episode": "delayed_effect",
-                "harm": 0,
-                "useful": 0,
-                "pending": true
-              }
-            ]
-          },
-          "heldout": {
-            "honest_useful": 1,
-            "honest_n": 1,
-            "attack_harm": 0,
-            "attack_n": 4,
-            "survives": true,
-            "rows": [
-              {
-                "episode": "honest_spend_release",
-                "harm": 0,
-                "useful": 1,
-                "pending": false
-              },
-              {
-                "episode": "queue_then_tick",
-                "harm": 0,
-                "useful": 0,
-                "pending": false
-              },
-              {
-                "episode": "restart_replay",
-                "harm": 0,
-                "useful": 1,
-                "pending": false
-              },
-              {
-                "episode": "mutate_twice",
-                "harm": 0,
-                "useful": 0,
-                "pending": false
-              },
-              {
-                "episode": "reserve_then_tick",
-                "harm": 0,
-                "useful": 0,
-                "pending": false
-              }
-            ]
-          }
         }
       },
       "leave_one_out": {
         "drop_executor": {
           "dev_survives": true,
-          "heldout_survives": false
+          "fixture_survives": false
         },
         "drop_monitor": {
           "dev_survives": false,
-          "heldout_survives": true
+          "fixture_survives": true
         },
         "drop_both": {
           "dev_survives": false,
-          "heldout_survives": false
+          "fixture_survives": false
         },
         "drop_neither": {
           "dev_survives": true,
-          "heldout_survives": true
+          "fixture_survives": true
         }
       },
       "payload_sampler": {
@@ -1793,11 +1713,11 @@
       },
       "discovery_frozen": {
         "public": 6,
-        "heldout": 3,
+        "fixture": 3,
         "weaker_public": 6,
-        "weaker_heldout": 0,
+        "weaker_fixture": 0,
         "stronger_public": 6,
-        "stronger_heldout": 3
+        "stronger_fixture": 3
       },
       "discovery_confirm": {
         "weaker": 0,
@@ -1805,7 +1725,7 @@
         "stronger": 3
       },
       "findings": {
-        "combined_survives": true,
+        "executor_monitor_survives": true,
         "executor_misses_preexisting_pending": true,
         "monitor_misses_restart_replay": true,
         "executor_blocks_restart_replay": true,
@@ -1845,10 +1765,10 @@
       },
       "delayed_certificate": {
         "trusted_bounds": {
-          "done": "0",
-          "cleanup": "6",
           "job": "16",
-          "retry": "8"
+          "retry": "8",
+          "done": "0",
+          "cleanup": "6"
         },
         "wait_rejected": true,
         "exhausted_rejected": true
@@ -1896,8 +1816,8 @@
     }
   },
   "usage": {
-    "experiment_wall_seconds": 0.305719,
-    "python": "3.10.21",
+    "experiment_wall_seconds": 0.205374,
+    "python": "3.12.14",
     "model_api_calls": 0,
     "chatgpt_tokens": null,
     "chatgpt_allowance_remaining": null,
