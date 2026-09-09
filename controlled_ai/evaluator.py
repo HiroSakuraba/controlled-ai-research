@@ -89,3 +89,13 @@ def verify(task, program, claimed, step_limit=STEP_LIMIT, budget=CHECKER_BUDGET)
                 'checker': CHECKER, 'evals': used, 'steps': steps}
     return {'accepted': True, 'reason': 'equivalent', 'digest': digest,
             'checker': CHECKER, 'evals': DOMAIN, 'steps': steps}
+
+def confirm_catalog():
+    specs = (
+        ('conf-xor-or', 'confirm', 'xor_then_or', _compose(_xor(7), _or(8))),
+        ('conf-add-xor', 'confirm', 'add_then_xor', _compose(_add(5), _xor(4))),
+        ('conf-not-shl', 'confirm', 'not_then_shl', _compose(_not(), _shl(3))),
+    )
+    return tuple({'id': i, 'split': split, 'family': family, 'fn': fn,
+                  'examples': _examples(fn)} for i, split, family, fn in specs)
+
