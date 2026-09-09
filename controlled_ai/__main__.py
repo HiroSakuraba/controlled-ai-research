@@ -13,6 +13,7 @@ from .provenance import experiment as provenance_experiment
 from .takeover import experiment as takeover_experiment
 from .sampler import experiment as sampler_experiment
 from .compare import experiment as compare_experiment
+from .expand import experiment as expand_experiment
 
 def executor_recovery():
     with tempfile.TemporaryDirectory() as d:
@@ -55,6 +56,7 @@ def main():
     results['takeover'] = takeover_experiment()
     results['sampler'] = sampler_experiment()
     results['comparison'] = compare_experiment()
+    results['expansion'] = expand_experiment()
     print(json.dumps({'generated_utc': datetime.now(timezone.utc).isoformat(),
                       'scope': 'deterministic finite model; no empirical model evaluation',
                       'results': results, 'usage': {

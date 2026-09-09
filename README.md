@@ -33,7 +33,7 @@ The program studies state-bound single-use permissions, evidence provenance, con
 6. Freeze configurations and perform held-out comparisons.
 7. Expand one dimension at a time and repeat the retained comparisons.
 
-This repository contains the research design and a finite prototype through stage 6. Stages 1–6 use the standard library only. Learned monitors, model attackers, and priced-call comparisons belong to later stages.
+This repository contains the research design and a finite prototype through stage 7’s stdlib expansions. Stages 1–7 here use the standard library only. Learned monitors, model attackers, priced-call comparisons, training-method changes, and a 29,956-episode model reference audit need a model API and are not in this prototype.
 
 ## Related work
 
@@ -150,17 +150,30 @@ bound. Three confirmatory 12-bit families, disjoint from the original nine,
 keep the same checker: length-2 search verifies all three, length-1 and
 symbolic verify none.
 
-Next work: expand one dimension at a time (task, interface, horizon,
-capability, or training method) and repeat the retained comparisons (stage 7).
-Model attackers and learned monitors remain out of this stdlib prototype.
+Horizon 6 → 8 is the one changed dimension. Hardened harm stays (0, 0);
+unbound payload stays (1, 1). State–time pairs at horizon 8 remain under the
+100,000 ceiling (216 hardened, 306 unbound). Appendix F’s setup–trigger case
+holds in the environment: one-step mutate and one-step release from a fresh
+state do not harm; approve–mutate–release does. A manufactured hidden-bit
+game with empty observations brackets the optimum in [1/2, 1]: full
+information is 1, the exact observation-limited value is 1/2. The full-info
+solver is an upper benchmark, labeled as such. A delayed-worker certificate
+with retry has trusted bounds job 16, cleanup 6, retry 8; a wait self-loop
+and an exhausted reserve are rejected. The uniform reference process on the
+original game has expected harm 0 when hardened and 20191/262144 when
+payloads are unbound, strictly below the attacker value 1.
+
+Further stdlib expansion of this same eight-action, fully checked 12-bit
+interface will not answer the remaining plan questions. Those need an acting
+model, a learned monitor, or a priced-call budget.
 
 ## Usage record
 
 This prototype uses no external model API calls, paid services, new dependencies,
-or delegated agents. Sixty tests passed in the recorded run. The report
+or delegated agents. Sixty-seven tests passed in the recorded run. The report
 records experiment runtime, state counts, recovery of one in-flight release,
 the discovery ledger, monitor complementarity, exhaustion caps, provenance
-review, takeover fixtures, sampler bounds, and the frozen confirmatory
-comparison. These measurements cover local execution only. ChatGPT token use,
-Plus allowance consumption, remaining quota, and account charges are
-unavailable to this process and are not estimated.
+review, takeover fixtures, sampler bounds, the frozen confirmatory
+comparison, and stage-7 expansions. These measurements cover local execution
+only. ChatGPT token use, Plus allowance consumption, remaining quota, and
+account charges are unavailable to this process and are not estimated.
