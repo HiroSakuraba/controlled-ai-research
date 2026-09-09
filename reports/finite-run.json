@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-09T14:49:04.671585+00:00",
+  "generated_utc": "2026-09-09T15:03:29.504796+00:00",
   "scope": "deterministic finite model; no empirical model evaluation",
   "results": {
     "hardened": {
@@ -73,8 +73,8 @@
       "horizon": 6
     },
     "progress_certificate": {
-      "done": "0",
-      "pending": "4"
+      "pending": "4",
+      "done": "0"
     },
     "executor_recovery": {
       "released": 0,
@@ -958,8 +958,8 @@
         "can_take_over": false
       },
       "cleanup_certificate": {
-        "done": "0",
-        "pending": "4"
+        "pending": "4",
+        "done": "0"
       }
     },
     "sampler": {
@@ -1765,10 +1765,10 @@
       },
       "delayed_certificate": {
         "trusted_bounds": {
-          "done": "0",
-          "retry": "8",
+          "cleanup": "6",
           "job": "16",
-          "cleanup": "6"
+          "retry": "8",
+          "done": "0"
         },
         "wait_rejected": true,
         "exhausted_rejected": true
@@ -1848,7 +1848,7 @@
     }
   },
   "usage": {
-    "experiment_wall_seconds": 0.164303,
+    "experiment_wall_seconds": 0.168233,
     "python": "3.12.14",
     "model_api_calls": 0,
     "chatgpt_tokens": null,
