@@ -30,7 +30,7 @@ The program studies state-bound single-use permissions, evidence provenance, con
 3. Run independently checked discovery experiments.
 4. Evaluate model attackers, monitoring, evidence provenance, computational exhaustion, and takeover.
 5. Implement the shared probability budget and evaluate its reference process.
-6. Freeze configurations and perform held-out comparisons.
+6. Freeze configurations and perform predeclared fixture comparisons.
 7. Expand one dimension at a time and repeat the retained comparisons.
 
 This repository contains the research design and a finite prototype through stage 7’s stdlib expansions. Stages 1–7 here use the standard library only. Learned monitors, model attackers, priced-call comparisons, training-method changes, and a 29,956-episode model reference audit need a model API and are not in this prototype.
@@ -70,25 +70,12 @@ within this search. Disabling payload binding, replay protection, or reserve
 protection produces a concrete harmful trace. Experiment A’s evaluator checks
 released truth tables independently of approval and returns a failing input.
 
-The executor issues HMAC permits bound to the action, artifact, destination,
-full state, and rule set, with an expiry in executor steps. Consume, the local
-snapshot, and the dispatch record share one SQLite transaction. A later
-transaction records a simulated remote effect. A crash between those
-transactions resumes the same nonce and writes the effect once. Restart cannot
-replay a consumed nonce. Changed payloads, destinations, states, policies, and
-expired permits are rejected. The database still cannot atomically commit a
-real remote effect. Protecting keys, authoritative state, and database
-integrity remains the host's responsibility.
+Consequential executor actions require an HMAC permit bound to the action, artifact, destination, full state, and rule set, with an expiry in executor steps. Consume, the local snapshot, and the dispatch record share one SQLite transaction. The local effects table deduplicates recovery by nonce. A real remote effect needs a receiver-side idempotency key and reconciliation: SQLite alone cannot provide exactly-once external delivery. Protecting keys, authoritative state, and database integrity remains the host's responsibility.
 
-The discovery experiment synthesizes straight-line 12-bit programs. Generators
-receive sixteen public input/output examples and a frozen statement; they do
-not import the held-out evaluator. The checker compares every candidate against
-the total function on all 4,096 inputs, with a step limit and a checker budget,
-and records the accepted digest. Release is allowed only for that digest.
-Six public tasks are single-opcode; three held-out families need two opcodes.
+The discovery experiment synthesizes straight-line 12-bit programs. Generators receive sixteen public input/output examples and a frozen statement. The canonical evaluator resolves task identifiers itself, compares every candidate against the total function on all 4,096 inputs, and stores accepted task/digest pairs durably. Release is allowed only for a stored pair. This remains a same-process fixture; an independent checker in a real system must run under separate credentials. Six public tasks are single-opcode; three fixture families need two opcodes.
 A length-1 enumerative search verifies all six public tasks and none of the
-held-out tasks. A one-shot symbolic fit from the first example misses the
-public `and` mask (the first public input is zero) and all held-out families.
+fixture tasks. A one-shot symbolic fit from the first example misses the
+public `and` mask (the first public input is zero) and all fixture families.
 A length-2 enumerative search verifies all nine tasks under the same checker
 and permissions. Negative controls cover invalid syntax, a weakened statement,
 an incorrect program, a step-limit violation, and a mismatched release digest.
@@ -115,15 +102,14 @@ authorizes an honest proposal, blocks a correct minority objection, records
 dissent when that objection is overruled, rejects a material change after
 freeze, and exhausts a two-objection budget.
 
-A replacement with its own key completes an ordinary approved release after
-revocation. The actor’s leftover token is rejected under an independent key
+A replacement fixture with its own key completes an ordinary approved release after revocation. These state copies are unsigned and intentionally illustrate stale-state and shared-dependency failures; they are not a secure handoff protocol. The actor’s leftover token is rejected under an independent key
 and accepted when the signing key is shared. Trusting a stale export loses
 the approval and misses a pending job; copying live state completes the
 release and cancels the pending job under cancel-on-revoke. Wiping a shared
 database drops both paths. Spending the recovery reserve makes takeover
 unavailable.
 
-The finite-menu sampler uses exact rationals. Menus are complete executable
+The finite-menu sampler uses exact rationals and records the complete menu, reference masses, ranking, permission mask, quantile distribution, and an HMAC-protected event record. It rejects mismatched permission masks. The deterministic seeded RNG is for reproducible fixtures, not an adversarial randomness source. Menus are complete executable
 choices, not operation names. Uniform selection among one hundred artifacts,
 one harmful, has reference harm 1/100. An unconstrained selector that picks
 the harmful artifact has likelihood ratio 100; a claimed factor-ten bound
@@ -138,15 +124,12 @@ that index; a different RNG does not redraw. Invalid scores fall back to the
 reference (q = 1). The zero-event 95% sample size for p_upper = 10^{-4} is
 29,956, matching the plan.
 
-Configurations are frozen (rules, channels, A0 = 10, q = 1/10, checker,
-horizon). Development episodes are the original four ablations plus the honest
-release; held-out episodes were not used to choose channels. Combined
-executor+monitor and the trusted reference survive both splits. The executor
+Configurations are frozen (rules, channels, A0 = 10, q = 1/10, checker, horizon). Development episodes are the original four ablations plus the honest release; the separate fixture episodes are predeclared but are not independent held-out evaluation. The executor+monitor configuration and a restrictive reference policy survive both splits. The executor
 alone misses a pre-existing pending tick; the monitor alone misses a
 restart-then-release replay. Composition is therefore strictly better than
 either component on this suite. Untrusted baseline fails. Permission filtering
 before sampling zeros payload harm; unconstrained argmax exceeds the q = 1/2
-bound. Three confirmatory 12-bit families, disjoint from the original nine,
+bound. Three separate 12-bit fixture families, disjoint from the original nine,
 keep the same checker: length-2 search verifies all three, length-1 and
 symbolic verify none.
 
@@ -173,7 +156,7 @@ This prototype uses no external model API calls, paid services, new dependencies
 or delegated agents. Sixty-seven tests passed in the recorded run. The report
 records experiment runtime, state counts, recovery of one in-flight release,
 the discovery ledger, monitor complementarity, exhaustion caps, provenance
-review, takeover fixtures, sampler bounds, the frozen confirmatory
+review, takeover fixtures, sampler bounds, the frozen fixture
 comparison, and stage-7 expansions. These measurements cover local execution
 only. ChatGPT token use, Plus allowance consumption, remaining quota, and
 account charges are unavailable to this process and are not estimated.
