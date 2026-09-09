@@ -104,13 +104,14 @@ class Executor:
         nonce = self._dispatch(token, payload, pre, action)
         if crash_after == 'dispatch':
             raise Crash(nonce)
-        self._effect(nonce, action, self.state)
+        self._effect(nonce, action, self.state, destination)
         return self.state
 
     def recover(self):
-        rows = list(self.db.execute("SELECT nonce, action FROM log WHERE status='dispatched'"))
-        for nonce, action in rows:
-            self._effect(nonce, action, self.state)
+        rows = list(self.db.execute("SELECT nonce, action, payload FROM log WHERE status='dispatched'"))
+        for nonce, action, payload in rows:
+            destination = json.loads(payload)['destination']
+            self._effect(nonce, action, self.state, destination)
 
     def _dispatch(self, token, payload, pre, action):
         holder = []
@@ -131,10 +132,16 @@ class Executor:
         self.state, self.clock = holder[0]
         return nonce
 
-    def _effect(self, nonce, action, state):
+    def _effect(self, nonce, action, state, destination='default'):
         artifact = state.released if action == 'release' else -1
         if self.effect_receiver is not None:
-            self.effect_receiver.deliver(nonce, action, artifact)
+            receipt = self.effect_receiver.deliver(nonce, action, artifact, destination)
+            try:
+                received = json.loads(receipt)
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise PermitError('malformed effect receipt') from exc
+            if received != {'nonce': nonce, 'action': action, 'artifact': artifact, 'destination': destination}:
+                raise PermitError('effect receiver disagreement')
         with self.db:
             self.db.execute('INSERT OR IGNORE INTO effects VALUES (?, ?, ?)',
                             (nonce, action, artifact))
