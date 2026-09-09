@@ -25,8 +25,9 @@ def payload_id(action, artifact, destination='default'):
                       sort_keys=True, separators=(',', ':'))
 
 class Executor:
-    def __init__(self, path, key, state=None, rules=None):
+    def __init__(self, path, key, state=None, rules=None, effect_receiver=None):
         self.store = PermitStore(path, key)
+        self.effect_receiver = effect_receiver
         self.db = self.store.db
         self.db.execute('CREATE TABLE IF NOT EXISTS snapshot '
                         '(id INTEGER PRIMARY KEY CHECK (id=1), state TEXT NOT NULL, clock INTEGER NOT NULL)')
@@ -131,7 +132,10 @@ class Executor:
         return nonce
 
     def _effect(self, nonce, action, state):
+        artifact = state.released if action == 'release' else -1
+        if self.effect_receiver is not None:
+            self.effect_receiver.deliver(nonce, action, artifact)
         with self.db:
             self.db.execute('INSERT OR IGNORE INTO effects VALUES (?, ?, ?)',
-                            (nonce, action, state.released if action == 'release' else -1))
+                            (nonce, action, artifact))
             self.db.execute("UPDATE log SET status='completed' WHERE nonce=?", (nonce,))
