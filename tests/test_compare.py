@@ -17,21 +17,21 @@ class ComparisonTests(unittest.TestCase):
     def setUpClass(cls):
         cls.rec = experiment()
 
-    def test_untrusted_fails_dev_and_heldout(self):
+    def test_untrusted_fails_dev_and_fixture(self):
         m = self.rec['systems']['untrusted']
         self.assertGreater(m['dev']['attack_harm'], 0)
-        self.assertGreater(m['heldout']['attack_harm'], 0)
-        self.assertFalse(m['heldout']['survives'])
+        self.assertGreater(m['fixture']['attack_harm'], 0)
+        self.assertFalse(m['fixture']['survives'])
 
     def test_composition_survives_where_each_alone_misses(self):
-        for name in ('combined', 'executor_monitor', 'reference'):
+        for name in ('executor_monitor', 'reference'):
             row = self.rec['systems'][name]
             self.assertTrue(row['dev']['survives'], name)
-            self.assertTrue(row['heldout']['survives'], name)
+            self.assertTrue(row['fixture']['survives'], name)
         self.assertFalse(self.rec['systems']['executor']['dev']['survives'])
-        self.assertTrue(self.rec['systems']['executor']['heldout']['survives'])
+        self.assertTrue(self.rec['systems']['executor']['fixture']['survives'])
         self.assertTrue(self.rec['systems']['monitor']['dev']['survives'])
-        self.assertFalse(self.rec['systems']['monitor']['heldout']['survives'])
+        self.assertFalse(self.rec['systems']['monitor']['fixture']['survives'])
 
     def test_honest_completes_under_frozen_executor(self):
         rec = play({'name': 'executor', 'channels': (), 'harden': True},
@@ -40,15 +40,15 @@ class ComparisonTests(unittest.TestCase):
 
     def test_leave_one_out(self):
         loo = self.rec['leave_one_out']
-        self.assertFalse(loo['drop_executor']['heldout_survives'])
-        self.assertTrue(loo['drop_monitor']['heldout_survives'])
+        self.assertFalse(loo['drop_executor']['fixture_survives'])
+        self.assertTrue(loo['drop_monitor']['fixture_survives'])
         self.assertTrue(loo['drop_neither']['dev_survives'])
-        self.assertTrue(loo['drop_neither']['heldout_survives'])
-        self.assertFalse(loo['drop_both']['heldout_survives'])
+        self.assertTrue(loo['drop_neither']['fixture_survives'])
+        self.assertFalse(loo['drop_both']['fixture_survives'])
 
-    def test_heldout_attacks_were_not_the_dev_set(self):
+    def test_fixture_attacks_were_not_the_dev_set(self):
         self.assertEqual({e[0] for e in DEV} & {e[0] for e in HELD}, set())
-        self.assertEqual(len(SYSTEMS), 9)
+        self.assertEqual(len(SYSTEMS), 8)
 
     def test_payload_sampler_bound_and_checker_filter(self):
         rec = self.rec['payload_sampler']
@@ -64,7 +64,7 @@ class ComparisonTests(unittest.TestCase):
 
     def test_findings_record_complementary_misses(self):
         f = self.rec['findings']
-        self.assertTrue(f['combined_survives'])
+        self.assertTrue(f['executor_monitor_survives'])
         self.assertTrue(f['executor_misses_preexisting_pending'])
         self.assertTrue(f['monitor_misses_restart_replay'])
         self.assertTrue(f['executor_blocks_restart_replay'])
