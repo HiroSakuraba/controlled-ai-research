@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-08T23:20:56.960077+00:00",
+  "generated_utc": "2026-09-09T05:25:58.284351+00:00",
   "scope": "deterministic finite model; no empirical model evaluation",
   "results": {
     "hardened": {
@@ -75,11 +75,551 @@
     "progress_certificate": {
       "done": "0",
       "pending": "4"
+    },
+    "executor_recovery": {
+      "released": 0,
+      "effects_before_recover_close": 0,
+      "effects": 1,
+      "released_after_crash": 0,
+      "effects_after_replay": 1,
+      "consumed": true
+    },
+    "discovery": {
+      "width": 12,
+      "domain": 4096,
+      "checker": "exhaustive-12bit-v1",
+      "generators": {
+        "weaker": {
+          "tried_total": 711,
+          "checker_evals": 24576,
+          "verified_public": 6,
+          "verified_heldout": 0,
+          "public_tasks": 6,
+          "heldout_tasks": 3,
+          "released": 6,
+          "rows": [
+            {
+              "task": "pub-xor-1",
+              "split": "public",
+              "family": "xor_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "050683a82dd33261e32f3246d23812e648685982a15c595757cca346511c11d2",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "xor",
+                  1
+                ]
+              ],
+              "tried": 46,
+              "released": true
+            },
+            {
+              "task": "pub-and-15",
+              "split": "public",
+              "family": "and_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "115ce27a18d6d1c55a9d95408acd453340d7eb1ae6fb913f046722b803c0c3ad",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "and",
+                  15
+                ]
+              ],
+              "tried": 11,
+              "released": true
+            },
+            {
+              "task": "pub-or-8",
+              "split": "public",
+              "family": "or_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "6bfdb05ceb2901697b886e26699dee65596059e2536f28d0c87507dba727a660",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "or",
+                  8
+                ]
+              ],
+              "tried": 31,
+              "released": true
+            },
+            {
+              "task": "pub-add-3",
+              "split": "public",
+              "family": "add_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "46bddbea0a23f0d3aad1265f02a3e199ebbe894ef6a1ec57b74d28a81b695f91",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "add",
+                  3
+                ]
+              ],
+              "tried": 70,
+              "released": true
+            },
+            {
+              "task": "pub-shl-2",
+              "split": "public",
+              "family": "shl",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "76d39df1e8f17c4f3ad95110d6acffc1d9face5f03fe825a83e21aa2630348d9",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "shl",
+                  2
+                ]
+              ],
+              "tried": 91,
+              "released": true
+            },
+            {
+              "task": "pub-not",
+              "split": "public",
+              "family": "not",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "910b3010f927ac44be43a0bcc9741577c679972dadc1c7935f7054ffcd8ae5bb",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "xor",
+                  4095
+                ]
+              ],
+              "tried": 66,
+              "released": true
+            },
+            {
+              "task": "hold-xor-and",
+              "split": "heldout",
+              "family": "xor_then_and",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 132,
+              "released": false
+            },
+            {
+              "task": "hold-add-xor",
+              "split": "heldout",
+              "family": "add_then_xor",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 132,
+              "released": false
+            },
+            {
+              "task": "hold-shl-or",
+              "split": "heldout",
+              "family": "shl_then_or",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 132,
+              "released": false
+            }
+          ]
+        },
+        "symbolic": {
+          "tried_total": 85,
+          "checker_evals": 20480,
+          "verified_public": 5,
+          "verified_heldout": 0,
+          "public_tasks": 6,
+          "heldout_tasks": 3,
+          "released": 5,
+          "rows": [
+            {
+              "task": "pub-xor-1",
+              "split": "public",
+              "family": "xor_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "050683a82dd33261e32f3246d23812e648685982a15c595757cca346511c11d2",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "xor",
+                  1
+                ]
+              ],
+              "tried": 1,
+              "released": true
+            },
+            {
+              "task": "pub-and-15",
+              "split": "public",
+              "family": "and_const",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 17,
+              "released": false
+            },
+            {
+              "task": "pub-or-8",
+              "split": "public",
+              "family": "or_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "6bfdb05ceb2901697b886e26699dee65596059e2536f28d0c87507dba727a660",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "or",
+                  8
+                ]
+              ],
+              "tried": 3,
+              "released": true
+            },
+            {
+              "task": "pub-add-3",
+              "split": "public",
+              "family": "add_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "46bddbea0a23f0d3aad1265f02a3e199ebbe894ef6a1ec57b74d28a81b695f91",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "add",
+                  3
+                ]
+              ],
+              "tried": 4,
+              "released": true
+            },
+            {
+              "task": "pub-shl-2",
+              "split": "public",
+              "family": "shl",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "76d39df1e8f17c4f3ad95110d6acffc1d9face5f03fe825a83e21aa2630348d9",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "shl",
+                  2
+                ]
+              ],
+              "tried": 8,
+              "released": true
+            },
+            {
+              "task": "pub-not",
+              "split": "public",
+              "family": "not",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "910b3010f927ac44be43a0bcc9741577c679972dadc1c7935f7054ffcd8ae5bb",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "xor",
+                  4095
+                ]
+              ],
+              "tried": 1,
+              "released": true
+            },
+            {
+              "task": "hold-xor-and",
+              "split": "heldout",
+              "family": "xor_then_and",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 17,
+              "released": false
+            },
+            {
+              "task": "hold-add-xor",
+              "split": "heldout",
+              "family": "add_then_xor",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 17,
+              "released": false
+            },
+            {
+              "task": "hold-shl-or",
+              "split": "heldout",
+              "family": "shl_then_or",
+              "accepted": false,
+              "reason": "no_candidate",
+              "digest": null,
+              "checker": null,
+              "evals": 0,
+              "steps": 0,
+              "tried": 17,
+              "released": false
+            }
+          ]
+        },
+        "stronger": {
+          "tried_total": 23016,
+          "checker_evals": 36864,
+          "verified_public": 6,
+          "verified_heldout": 3,
+          "public_tasks": 6,
+          "heldout_tasks": 3,
+          "released": 9,
+          "rows": [
+            {
+              "task": "pub-xor-1",
+              "split": "public",
+              "family": "xor_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "050683a82dd33261e32f3246d23812e648685982a15c595757cca346511c11d2",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "xor",
+                  1
+                ]
+              ],
+              "tried": 46,
+              "released": true
+            },
+            {
+              "task": "pub-and-15",
+              "split": "public",
+              "family": "and_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "115ce27a18d6d1c55a9d95408acd453340d7eb1ae6fb913f046722b803c0c3ad",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "and",
+                  15
+                ]
+              ],
+              "tried": 11,
+              "released": true
+            },
+            {
+              "task": "pub-or-8",
+              "split": "public",
+              "family": "or_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "6bfdb05ceb2901697b886e26699dee65596059e2536f28d0c87507dba727a660",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "or",
+                  8
+                ]
+              ],
+              "tried": 31,
+              "released": true
+            },
+            {
+              "task": "pub-add-3",
+              "split": "public",
+              "family": "add_const",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "46bddbea0a23f0d3aad1265f02a3e199ebbe894ef6a1ec57b74d28a81b695f91",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "add",
+                  3
+                ]
+              ],
+              "tried": 70,
+              "released": true
+            },
+            {
+              "task": "pub-shl-2",
+              "split": "public",
+              "family": "shl",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "76d39df1e8f17c4f3ad95110d6acffc1d9face5f03fe825a83e21aa2630348d9",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "shl",
+                  2
+                ]
+              ],
+              "tried": 91,
+              "released": true
+            },
+            {
+              "task": "pub-not",
+              "split": "public",
+              "family": "not",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "910b3010f927ac44be43a0bcc9741577c679972dadc1c7935f7054ffcd8ae5bb",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 4096,
+              "program": [
+                [
+                  "xor",
+                  4095
+                ]
+              ],
+              "tried": 66,
+              "released": true
+            },
+            {
+              "task": "hold-xor-and",
+              "split": "heldout",
+              "family": "xor_then_and",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "b9bc72b0b17fadaa5aa02fa25f1ff4b32c43dae6599ad8f0bbc79c9e50e74936",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 8192,
+              "program": [
+                [
+                  "and",
+                  15
+                ],
+                [
+                  "xor",
+                  1
+                ]
+              ],
+              "tried": 1498,
+              "released": true
+            },
+            {
+              "task": "hold-add-xor",
+              "split": "heldout",
+              "family": "add_then_xor",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "8ac99017c82f56680b2e5ac73ecb5dcd179c5dcc0fed527bc9defe2a2ea0dc9c",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 8192,
+              "program": [
+                [
+                  "add",
+                  3
+                ],
+                [
+                  "xor",
+                  8
+                ]
+              ],
+              "tried": 9293,
+              "released": true
+            },
+            {
+              "task": "hold-shl-or",
+              "split": "heldout",
+              "family": "shl_then_or",
+              "accepted": true,
+              "reason": "equivalent",
+              "digest": "4eac49424cbdef7eb20689ea2a3e8c2f791068dc3decdfcafc07f91c813c7a99",
+              "checker": "exhaustive-12bit-v1",
+              "evals": 4096,
+              "steps": 8192,
+              "program": [
+                [
+                  "shl",
+                  1
+                ],
+                [
+                  "or",
+                  7
+                ]
+              ],
+              "tried": 11910,
+              "released": true
+            }
+          ]
+        }
+      },
+      "negative_controls": {
+        "invalid_syntax": "invalid_syntax",
+        "weakened_statement": "statement_mismatch",
+        "incorrect": "incorrect",
+        "accepted_equivalent": true,
+        "mismatched_release": "denied",
+        "checked_release": true,
+        "step_limit": "step_limit"
+      }
     }
   },
   "usage": {
-    "experiment_wall_seconds": 0.008959,
-    "python": "3.12.14",
+    "experiment_wall_seconds": 0.164905,
+    "python": "3.10.21",
     "model_api_calls": 0,
     "chatgpt_tokens": null,
     "chatgpt_allowance_remaining": null,
