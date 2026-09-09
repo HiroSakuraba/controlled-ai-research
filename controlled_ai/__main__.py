@@ -7,6 +7,7 @@ from .model import State, Rules
 from .solver import solve
 from .certificates import check
 from .executor import Executor, Crash
+from .issuer import PermitIssuer
 from .discovery import experiment as discovery_experiment
 from .monitor import comparison as monitor_comparison, exhaustion as exhaustion_experiment
 from .provenance import experiment as provenance_experiment
@@ -24,7 +25,7 @@ def executor_recovery():
         ex = Executor(path, key)
         ex.step('approve')
         try:
-            ex.step('release', token=ex.authorize('release'), crash_after='dispatch')
+            ex.step('release', token=PermitIssuer(key).issue(ex, 'release'), crash_after='dispatch')
         except Crash:
             pass
         before = len(ex.effects())
