@@ -174,3 +174,7 @@ The repository now includes a local closed-loop runner for rehearsing the paid-m
 ## Evaluator custody fixture
 
 `controlled_ai/custody.py` is the next step beyond the earlier in-process checker. A verifier process holds a private suite seed and signing key; workers receive signed public manifests, synthesize candidates from the listed examples, and submit them for exhaustive checking. The service persists a signed acceptance certificate keyed by task, artifact digest, checker version, checker digest, and manifest signature. It rejects modified manifests, substituted task identities, and substituted checker versions. This is an architectural rehearsal of evaluator custody, not a hardened isolation boundary.
+
+## Analysis and calibration
+
+`controlled_ai/analysis.py` reports Wilson intervals, exact paired sign tests, and predeclared stopping conditions. `controlled_ai/calibration.py` evaluates monitors on attack fixtures and labeled honest work. The current specified monitor catches the four constructed attacks without false blocks in the four benign fixtures; the deliberately overbroad monitor produces false blocks. These are implementation checks, not learned-monitor performance claims.
