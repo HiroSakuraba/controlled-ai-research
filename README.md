@@ -33,7 +33,7 @@ The program studies state-bound single-use permissions, evidence provenance, con
 6. Freeze configurations and perform held-out comparisons.
 7. Expand one dimension at a time and repeat the retained comparisons.
 
-This repository contains the research design and a finite prototype through stage 5. Stages 1–5 use the standard library only. Learned monitors, model attackers, and priced-call comparisons belong to later stages.
+This repository contains the research design and a finite prototype through stage 6. Stages 1–6 use the standard library only. Learned monitors, model attackers, and priced-call comparisons belong to later stages.
 
 ## Related work
 
@@ -138,16 +138,29 @@ that index; a different RNG does not redraw. Invalid scores fall back to the
 reference (q = 1). The zero-event 95% sample size for p_upper = 10^{-4} is
 29,956, matching the plan.
 
-Next work: freeze configurations and perform held-out confirmatory
-comparisons (stage 6). Model attackers and learned monitors remain out of
-this stdlib prototype.
+Configurations are frozen (rules, channels, A0 = 10, q = 1/10, checker,
+horizon). Development episodes are the original four ablations plus the honest
+release; held-out episodes were not used to choose channels. Combined
+executor+monitor and the trusted reference survive both splits. The executor
+alone misses a pre-existing pending tick; the monitor alone misses a
+restart-then-release replay. Composition is therefore strictly better than
+either component on this suite. Untrusted baseline fails. Permission filtering
+before sampling zeros payload harm; unconstrained argmax exceeds the q = 1/2
+bound. Three confirmatory 12-bit families, disjoint from the original nine,
+keep the same checker: length-2 search verifies all three, length-1 and
+symbolic verify none.
+
+Next work: expand one dimension at a time (task, interface, horizon,
+capability, or training method) and repeat the retained comparisons (stage 7).
+Model attackers and learned monitors remain out of this stdlib prototype.
 
 ## Usage record
 
 This prototype uses no external model API calls, paid services, new dependencies,
-or delegated agents. Fifty-one tests passed in the recorded run. The report
+or delegated agents. Sixty tests passed in the recorded run. The report
 records experiment runtime, state counts, recovery of one in-flight release,
 the discovery ledger, monitor complementarity, exhaustion caps, provenance
-review, takeover fixtures, and sampler bounds. These measurements cover local
-execution only. ChatGPT token use, Plus allowance consumption, remaining quota,
-and account charges are unavailable to this process and are not estimated.
+review, takeover fixtures, sampler bounds, and the frozen confirmatory
+comparison. These measurements cover local execution only. ChatGPT token use,
+Plus allowance consumption, remaining quota, and account charges are
+unavailable to this process and are not estimated.
