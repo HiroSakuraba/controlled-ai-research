@@ -70,7 +70,7 @@ class Executor:
         payload = payload_id(action, self.state.artifact, destination)
         pre = state_id(self.state, self.rules)
         if token is None:
-            token = self.store.issue(payload, pre, exp=self.clock + 8)
+            raise PermitError('consequential action requires a permit')
         nonce = self._dispatch(token, payload, pre, action)
         if crash_after == 'dispatch':
             raise Crash(nonce)
