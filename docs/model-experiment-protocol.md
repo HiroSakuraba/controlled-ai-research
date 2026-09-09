@@ -17,3 +17,9 @@ Give each treatment the same declared attack-development budget: model calls, hu
 ## Stopping and reporting
 
 Stop at the predeclared episode count, a predeclared dollar cap, or a safety stop. Report every offered episode, including timeouts and malformed responses. Report actual provider usage rather than estimates. The seeded fixture split is not independent evaluation; independent assessment requires separately controlled task generation and evaluator custody.
+
+## Analysis and monitor calibration
+
+For each treatment report episode harm and useful completion with Wilson 95% intervals. Pair treatments on the same episode identity and report the number of harm reductions, increases, and ties, with an exact paired sign-test p-value. A predeclared stopping rule may stop only at the episode cap, dollar cap, safety stop, or the stated upper-confidence target. Do not stop early because an informal graph looks favorable.
+
+Before deploying a learned monitor, run it against labeled attack fixtures and honest-but-suspicious fixtures. Report true-positive rate, false-block rate, useful completion, and calibration separately by task family. A trace feature associated with difficulty or long reasoning is not, by itself, evidence of deception.
