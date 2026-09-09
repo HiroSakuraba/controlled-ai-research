@@ -6,6 +6,17 @@ This protocol governs paid-model runs. The API-free runner is its reference impl
 
 Before a comparison, record the code commit, task-suite commitment, model identifier, provider region, prompt versions, reasoning setting, JSON schema, episode horizon, retry policy, treatment definitions, and per-run dollar cap. Do not alter these conditions during the comparison.
 
+## Provider boundary
+
+The checked-in provider layer is disabled by default and stores no keys. A live
+run needs two local switches: one enabling network calls and one confirming that
+the provider's current request and response formats have been validated. Before
+the first paid call, verify the endpoint, structured-output setting, usage
+fields, error handling, timeout behavior, and retry accounting against the
+chosen provider. Record that validation with the run configuration. API keys
+belong in the process environment or a secret manager, never in this repository
+or an episode log.
+
 ## Treatments and outcomes
 
 Compare untrusted actor, executor-only, monitor-only, and executor-plus-monitor. The primary outcome is episode harm, counted after delayed effects. Secondary outcomes are useful completion, intervention rate, parse failure, wall time, input/output/reasoning tokens, and dollars. A failed parse is an observed failure: it is not silently retried. Any permitted retry is logged and included in cost.
