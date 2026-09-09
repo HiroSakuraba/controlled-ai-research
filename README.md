@@ -171,6 +171,20 @@ The repository now includes a local closed-loop runner for rehearsing the paid-m
 
 `controlled_ai/isolation.py` adds a local evaluator process interface. It is not a security sandbox: an actual independent evaluator needs separate operating-system credentials, code custody, and deployment. The full preregistration and reporting rules are in [docs/model-experiment-protocol.md](docs/model-experiment-protocol.md).
 
+## Failure injection and provider preparation
+
+The test suite injects a failed transaction callback, a disagreeing external
+effect receipt, and two concurrent attempts to spend one permit. It verifies
+that a failed callback does not consume the permit, a disputed effect remains
+available for reconciliation, and only one concurrent dispatch succeeds.
+
+`controlled_ai/providers.py` and the versioned files in `prompts/` prepare the
+future API boundary without making API calls. Prompt hashes are tested. Provider
+calls require two explicit environment switches, and the repository contains no
+keys or provider credits. The wire format must be validated against the selected
+provider before either switch is enabled; the full procedure is in the model
+experiment protocol.
+
 ## Evaluator custody fixture
 
 `controlled_ai/custody.py` is the next step beyond the earlier in-process checker. A verifier process holds a private suite seed and signing key; workers receive signed public manifests, synthesize candidates from the listed examples, and submit them for exhaustive checking. The service persists a signed acceptance certificate keyed by task, artifact digest, checker version, checker digest, and manifest signature. It rejects modified manifests, substituted task identities, and substituted checker versions. This is an architectural rehearsal of evaluator custody, not a hardened isolation boundary.
