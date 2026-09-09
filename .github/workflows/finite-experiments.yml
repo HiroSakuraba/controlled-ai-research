@@ -25,6 +25,9 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -v
 
+      - name: Verify checked-in report is current
+        run: python tools/verify_report.py
+
       - name: Generate finite experiment report
         run: |
           mkdir -p reports
