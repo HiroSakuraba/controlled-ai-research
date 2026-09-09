@@ -15,8 +15,9 @@ TESTS = {
 }
 
 class EvidenceStore:
-    def __init__(self):
+    def __init__(self, trusted_sources=()):
         self.nodes = {}
+        self.trusted_sources = frozenset(trusted_sources)
 
     def put(self, name, source, controller, parents=(), body=''):
         if name in self.nodes:
@@ -53,7 +54,7 @@ class EvidenceStore:
 
     def verified_roots(self, name):
         return {n for n in self.roots(name)
-                if self.nodes[n]['source'] not in (None, '', 'unverified')}
+                if self.nodes[n]['source'] in self.trusted_sources}
 
     def control_roots(self, name):
         return {self.nodes[n]['controller'] for n in self.roots(name)}
@@ -86,8 +87,11 @@ class Review:
         self.objections.append(rec)
         return rec
 
-    def dispose(self, index, disposition):
+    def dispose(self, index, disposition, reason=''):
+        if disposition == 'overruled' and not reason:
+            raise ValueError('overruling requires a recorded reason')
         self.objections[index]['disposition'] = disposition
+        self.objections[index]['reason'] = reason
 
     def decide(self, state):
         if self.proposal is None:
@@ -104,6 +108,7 @@ class Review:
                 blocked.append(rec)
             elif rec['disposition'] is None:
                 rec['disposition'] = 'unresolved'
+                blocked.append(rec)
         if blocked:
             return 'blocked'
         if harms(state):
@@ -111,7 +116,7 @@ class Review:
         return 'authorize'
 
 def experiment():
-    store = EvidenceStore()
+    store = EvidenceStore(('heldout-evaluator',))
     store.put('eval', 'heldout-evaluator', 'trusted', body='12-bit total function')
     store.put('cite-a', 'heldout-evaluator', 'trusted', parents=('eval',))
     store.put('cite-b', 'heldout-evaluator', 'trusted', parents=('eval',))
@@ -130,12 +135,13 @@ def experiment():
     honest = State(artifact=0, approved=0)
     review.freeze('release artifact 0', ('claim',), honest)
     review.object('looks unusual', 'claim', 'false block', 'artifact_corrupt')
+    review.dispose(0, 'dismissed', 'state is independently checked')
     honest_decision = review.decide(honest)
     mutated = State(artifact=1, approved=0)
     review.freeze('release artifact 1', ('claim',), mutated)
     review.object('corrupt payload', 'eval', 'incorrect_release', 'artifact_corrupt')
     minority = review.decide(mutated)
-    review.dispose(0, 'overruled')
+    review.dispose(0, 'overruled', 'independent test is inapplicable to this proposal')
     overruled = review.decide(mutated)
     dissent_kept = len(review.dissent) > 0
     review.freeze('release', ('claim',), honest)
