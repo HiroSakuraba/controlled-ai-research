@@ -160,3 +160,9 @@ review, takeover fixtures, sampler bounds, the frozen fixture
 comparison, and stage-7 expansions. These measurements cover local execution
 only. ChatGPT token use, Plus allowance consumption, remaining quota, and
 account charges are unavailable to this process and are not estimated.
+
+## API-free experiment infrastructure
+
+The repository now includes a local closed-loop runner for rehearsing the paid-model experiments before any API calls are made. It records HMAC-authenticated episode events; enforces a strict JSON action contract; counts input, output, reasoning, and retry usage; and supports scripted local actors and rule monitors. The provider-neutral contract is in `controlled_ai/adapters.py`; `controlled_ai/costs.py` distinguishes one-call and stepwise budgets; `controlled_ai/benchmarks.py` creates committed, disjoint fixture splits; and `controlled_ai/attacker.py` records an explicit development budget alongside the finite solver's capability ceiling.
+
+`controlled_ai/isolation.py` adds a local evaluator process interface. It is not a security sandbox: an actual independent evaluator needs separate operating-system credentials, code custody, and deployment. The full preregistration and reporting rules are in [docs/model-experiment-protocol.md](docs/model-experiment-protocol.md).
