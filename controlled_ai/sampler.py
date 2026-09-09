@@ -4,6 +4,8 @@ Menus are complete executable choices. The controller draws; the ranking model
 cannot resample, refuse the draw, or extend the reference menu. Arithmetic is
 exact rationals. A0 is the remaining amplification A, with B = ln A0.
 """
+import hashlib
+import hmac
 import json
 import math
 import random
@@ -21,6 +23,9 @@ def masses(n):
     return tuple(F(1, n) for _ in range(n))
 
 def filter_normalize(p, allowed):
+    p, allowed = tuple(p), tuple(allowed)
+    if len(p) != len(allowed):
+        raise SamplerError('permission mask length')
     p = [rational(x) if on else F(0) for x, on in zip(p, allowed)]
     z = sum(p)
     if z == 0:
@@ -78,14 +83,18 @@ def audit_n(p_upper=1e-4, alpha=0.05):
     return math.ceil(math.log(alpha) / math.log(1 - p_upper))
 
 class Sampler:
-    def __init__(self, path, A0=10, seed=0):
+    def __init__(self, path, A0=10, seed=0, audit_key=b'sampler-fixture-key'):
+        if not isinstance(audit_key, bytes) or len(audit_key) < 16:
+            raise ValueError('use at least 16 audit-key bytes')
+        self.audit_key = audit_key
         self.A0 = rational(A0)
         self.A = self.A0
         self.rng = random.Random(seed)
         self.db = sqlite3.connect(path)
         self.db.execute('CREATE TABLE IF NOT EXISTS event '
                         '(step INTEGER PRIMARY KEY, menu TEXT NOT NULL, q TEXT NOT NULL, '
-                        'A TEXT NOT NULL, idx INTEGER NOT NULL, choice TEXT NOT NULL)')
+                        'A TEXT NOT NULL, idx INTEGER NOT NULL, choice TEXT NOT NULL, '
+                        'context TEXT NOT NULL, event_mac TEXT NOT NULL)')
         self.db.commit()
         self.step = 0
         row = self.db.execute('SELECT step, A FROM event ORDER BY step DESC LIMIT 1').fetchone()
@@ -110,9 +119,15 @@ class Sampler:
         self.A = spend(self.A, q)
         idx = draw(Q, self.rng)
         blob = json.dumps(list(choices), separators=(',', ':'))
+        context = json.dumps({'choices': list(choices), 'p': [str(x) for x in p],
+                              'scores': None if scores is None else list(scores),
+                              'q': str(q), 'allowed': None if allowed is None else list(allowed),
+                              'Q': [str(x) for x in Q]}, sort_keys=True, separators=(',', ':'))
+        signed = '|'.join((str(self.step), blob, str(q), str(self.A), str(idx), json.dumps(choices[idx]), context))
+        mac = hmac.new(self.audit_key, signed.encode(), hashlib.sha256).hexdigest()
         with self.db:
-            self.db.execute('INSERT INTO event VALUES (?, ?, ?, ?, ?, ?)',
-                            (self.step, blob, str(q), str(self.A), idx, json.dumps(choices[idx])))
+            self.db.execute('INSERT INTO event VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                            (self.step, blob, str(q), str(self.A), idx, json.dumps(choices[idx]), context, mac))
         if crash:
             raise SamplerError('crash')
         choice = choices[idx]
@@ -120,10 +135,19 @@ class Sampler:
         return choice, Q
 
     def replay(self, step):
-        row = self.db.execute('SELECT idx, choice FROM event WHERE step=?', (step,)).fetchone()
+        row = self.db.execute('SELECT menu, q, A, idx, choice, context, event_mac FROM event WHERE step=?', (step,)).fetchone()
         if not row:
             raise SamplerError('missing event')
-        return row[0], json.loads(row[1])
+        menu, q, A, idx, choice, context, mac = row
+        signed = '|'.join((str(step), menu, q, A, str(idx), choice, context))
+        expected = hmac.new(self.audit_key, signed.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(expected, mac):
+            raise SamplerError('tampered event')
+        data = json.loads(context)
+        p = tuple(rational(x) for x in data['p']); _, Q = quantile(p, tuple(data['scores']), rational(data['q']))
+        if [str(x) for x in Q] != data['Q'] or json.loads(menu)[idx] != json.loads(choice):
+            raise SamplerError('inconsistent event')
+        return idx, json.loads(choice)
 
     def retry(self):
         raise SamplerError('free retry forbidden')
