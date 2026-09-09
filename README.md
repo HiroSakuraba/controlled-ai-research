@@ -189,3 +189,5 @@ The repository now includes a local closed-loop runner for rehearsing the paid-m
 - [Release checklist](docs/release-checklist.md)
 
 For a clean local verification run: `make test`, `make verify`.
+
+The latest hardening pass adds a separate idempotent effect receiver and monotonic signed handoff records. The HMAC signer is deliberately a fixture; the interface is designed to be replaced by an external public-key signer/verifier. Evaluator custody tasks now vary across hidden compositions of one to three interpreter operations.
