@@ -21,7 +21,7 @@ def executor_recovery():
         ex = Executor(path, key)
         ex.step('approve')
         try:
-            ex.step('release', crash_after='dispatch')
+            ex.step('release', token=ex.authorize('release'), crash_after='dispatch')
         except Crash:
             pass
         before = len(ex.effects())
