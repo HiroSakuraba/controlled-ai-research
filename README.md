@@ -178,3 +178,14 @@ The repository now includes a local closed-loop runner for rehearsing the paid-m
 ## Analysis and calibration
 
 `controlled_ai/analysis.py` reports Wilson intervals, exact paired sign tests, and predeclared stopping conditions. `controlled_ai/calibration.py` evaluates monitors on attack fixtures and labeled honest work. The current specified monitor catches the four constructed attacks without false blocks in the four benign fixtures; the deliberately overbroad monitor produces false blocks. These are implementation checks, not learned-monitor performance claims.
+
+## Project documents
+
+- [Architecture](docs/architecture.md)
+- [Threat model](docs/threat-model.md)
+- [Model experiment protocol](docs/model-experiment-protocol.md)
+- [Reproducibility manifest](reproducibility-manifest.json)
+- [Contributor guidance](CONTRIBUTING.md)
+- [Release checklist](docs/release-checklist.md)
+
+For a clean local verification run: `make test`, `make verify`.
