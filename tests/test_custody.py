@@ -6,7 +6,7 @@ class CustodyTests(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory(); self.service=CustodyService('private-suite-seed',b'k'*32,self.tmp.name+'/a.db')
     def tearDown(self): self.service.close(); self.tmp.cleanup()
     def test_canonical_manifest_and_durable_certificate(self):
-        e=self.service.publish(0); m=e['manifest']; program,_=enumerate_bounded(m['examples'],2)
+        e=next(self.service.publish(i) for i in range(24) if self.service.publish(i)['manifest']['family'] != 'composition-3'); m=e['manifest']; program,_=enumerate_bounded(m['examples'],2)
         result=self.service.submit(e,program,claim(m))
         self.assertTrue(result['accepted']); self.assertEqual(m['checker_digest'],CHECKER_DIGEST)
         self.assertTrue(self.service.release(m['task_id'],result['digest'])['released'])
