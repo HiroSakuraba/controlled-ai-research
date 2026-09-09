@@ -31,7 +31,7 @@ def experiment():
         live = _dump(p)
         p.step('revoke')
         r = Executor(d + '/ord-r.db', key_b, state=_load_state(live))
-        r.step('release')
+        r.step('release', token=r.authorize('release'))
         ordinary = {'useful': int(r.state.released == 0), 'harm': int(bool(harms(r.state))),
                     'primary_revoked': p.state.revoked, 'independent_key': key_a != key_b}
         p.close(); r.close()
@@ -64,7 +64,7 @@ def experiment():
         trust = Executor(d + '/stale-t.db', key_b, state=_load_state(stale))
         trust.step('release')
         fresh = Executor(d + '/stale-f.db', key_b, state=_load_state(live))
-        fresh.step('release')
+        fresh.step('release', token=fresh.authorize('release'))
         stale_case = {'trust_export_useful': int(trust.state.released == 0),
                       'live_copy_useful': int(fresh.state.released == 0),
                       'state_loss': stale['state'] != live['state']}
@@ -74,7 +74,7 @@ def experiment():
         p = Executor(d + '/pend.db', key_a, rules=Rules(bind_payload=False, cancel_pending=False))
         p.step('approve')
         early = _dump(p)
-        p.step('queue')
+        p.step('queue', token=p.authorize('queue'))
         live = _dump(p)
         p.step('revoke')
         miss = Executor(d + '/pend-m.db', key_b, state=_load_state(early),
