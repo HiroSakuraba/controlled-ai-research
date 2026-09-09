@@ -33,7 +33,7 @@ The program studies state-bound single-use permissions, evidence provenance, con
 6. Freeze configurations and perform held-out comparisons.
 7. Expand one dimension at a time and repeat the retained comparisons.
 
-This repository contains the research design and a finite prototype through stage 3. Stages 1–3 use the standard library only. Model attackers and priced-call comparisons belong to later stages.
+This repository contains the research design and a finite prototype through stage 4. Stages 1–4 use the standard library only. Learned monitors, model attackers, and priced-call comparisons belong to later stages.
 
 ## Related work
 
@@ -99,14 +99,40 @@ state, yielding an expected time-to-completion bound. The example gives four
 steps. Stalling, incomplete distributions, unknown successors, and floating
 point probabilities are rejected.
 
-Next work: model attackers and monitors, evidence provenance, computational
-exhaustion, and trusted takeover, including shared-dependency failures.
+Specified monitors (not learned models) flag corrupt artifacts, delayed
+effects, replayed authority, and reserve spends. Removing the matching channel
+lets each of the four ablation attacks through; the full set blocks them and
+still permits the honest release. A trusted edit recovers a useful release
+from the unbound-payload attack; an audit denies it. An overbroad release
+flag blocks honest work. A monitor timeout withholds; it does not authorize.
+Actor and checker ceilings stop floods; the same padded honest workload still
+completes. Cap violations are not observed when the ceiling is enforced.
+Disabling the actor cap lets the flood-then-release attack succeed.
+
+The evidence store counts a shared evaluator root once, keeps unverified
+origin unknown after laundering, and detects a circular citation. Review
+authorizes an honest proposal, blocks a correct minority objection, records
+dissent when that objection is overruled, rejects a material change after
+freeze, and exhausts a two-objection budget.
+
+A replacement with its own key completes an ordinary approved release after
+revocation. The actor’s leftover token is rejected under an independent key
+and accepted when the signing key is shared. Trusting a stale export loses
+the approval and misses a pending job; copying live state completes the
+release and cancels the pending job under cancel-on-revoke. Wiping a shared
+database drops both paths. Spending the recovery reserve makes takeover
+unavailable.
+
+Next work: implement the shared probability budget and evaluate its reference
+process. Model attackers and learned monitors remain out of this stdlib
+prototype.
 
 ## Usage record
 
 This prototype uses no external model API calls, paid services, new dependencies,
-or delegated agents. Twenty-five tests passed in the recorded run. The report
+or delegated agents. Thirty-eight tests passed in the recorded run. The report
 records experiment runtime, state counts, recovery of one in-flight release,
-and the discovery ledger. These measurements cover local execution only.
+the discovery ledger, monitor complementarity, exhaustion caps, provenance
+review, and takeover fixtures. These measurements cover local execution only.
 ChatGPT token use, Plus allowance consumption, remaining quota, and account
 charges are unavailable to this process and are not estimated.
