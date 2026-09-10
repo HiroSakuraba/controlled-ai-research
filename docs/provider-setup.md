@@ -16,6 +16,8 @@ are still rejected. The dry-run does not call the network.
 
 Copy `.env.example` to `.env`. The loader accepts literal `KEY=value` lines only
 and never evaluates shell commands. Existing environment values win.
+`python3 -m controlled_ai.providers` now loads that file. OpenAI chat calls use
+`max_completion_tokens` and `reasoning_effort=none`. Redirects are rejected.
 
 ## Local config
 
