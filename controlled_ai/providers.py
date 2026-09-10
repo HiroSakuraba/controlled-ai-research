@@ -7,6 +7,7 @@ and are never written into episode records.
 """
 import json
 import os
+from pathlib import Path
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -35,6 +36,14 @@ KEY_ENV = {
     "anthropic": "ANTHROPIC_API_KEY",
     "xai": "XAI_API_KEY",
 }
+MODEL_ENV = {
+    "openai": "CONTROLLED_AI_OPENAI_MODEL",
+    "anthropic": "CONTROLLED_AI_ANTHROPIC_MODEL",
+}
+DEFAULT_MODELS = {
+    "openai": OPENAI_MODEL,
+    "anthropic": ANTHROPIC_MODEL,
+}
 
 
 class ProviderDisabled(RuntimeError):
@@ -43,6 +52,32 @@ class ProviderDisabled(RuntimeError):
 
 class ProviderConfigError(ValueError):
     pass
+
+
+def load_env(path=".env"):
+    """Literal KEY=value only; no shell evaluation, existing environment wins."""
+    path = Path(path)
+    if not path.exists():
+        return
+    allowed = set(KEY_ENV.values()) | set(MODEL_ENV.values()) | {
+        "CONTROLLED_AI_ENABLE_NETWORK",
+        "CONTROLLED_AI_VALIDATE_PROVIDER_WIRE",
+        "CONTROLLED_AI_OPENAI_REASONING_EFFORT",
+    }
+    values = {}
+    for number, line in enumerate(path.read_text().splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, sep, value = line.partition("=")
+        name, value = name.strip(), value.strip()
+        if not sep or name not in allowed or name in values:
+            raise ProviderConfigError("invalid .env entry on line %d" % number)
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        values[name] = value
+    for name, value in values.items():
+        os.environ.setdefault(name, value)
 
 
 def live_calls_allowed():
@@ -59,6 +94,36 @@ def require_live():
         raise ProviderDisabled(
             "provider wire format is not enabled; validate it and set CONTROLLED_AI_VALIDATE_PROVIDER_WIRE=1 explicitly"
         )
+
+
+def pinned_model(provider):
+    if provider not in ALLOWED_MODELS:
+        raise ProviderConfigError("unknown provider")
+    requested = os.environ.get(MODEL_ENV.get(provider, ""), DEFAULT_MODELS.get(provider, "")).strip()
+    if not requested:
+        requested = next(iter(ALLOWED_MODELS[provider]))
+    if requested not in ALLOWED_MODELS[provider]:
+        raise ProviderConfigError(
+            "model %r is not allowed for %s; pin %s"
+            % (requested, provider, next(iter(ALLOWED_MODELS[provider])))
+        )
+    return requested
+
+
+def served_model_allowed(provider, reported):
+    """Accept dated Luna/Haiku ids; reject other families."""
+    if provider not in ALLOWED_MODELS or not isinstance(reported, str):
+        return False
+    name = reported.strip()
+    if not name:
+        return False
+    if provider == "openai":
+        return name == OPENAI_MODEL or name.startswith(OPENAI_MODEL + "-")
+    if provider == "anthropic":
+        if name in ALLOWED_MODELS["anthropic"]:
+            return True
+        return "haiku-4-5" in name or "haiku-4.5" in name
+    return name in ALLOWED_MODELS[provider]
 
 
 @dataclass(frozen=True)
@@ -88,22 +153,32 @@ def haiku_config(prompt_id="actor-v1"):
     return ProviderConfig("anthropic", ANTHROPIC_MODEL, KEY_ENV["anthropic"], DEFAULT_ENDPOINTS["anthropic"], prompt_id)
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise AdapterError("provider redirect rejected")
+
+
 class HttpTransport:
     def post(self, url, headers, payload, timeout=60):
         request = urllib.request.Request(
             url,
-            data=json.dumps(payload).encode(),
+            data=json.dumps(payload).encode("utf-8"),
             headers=headers,
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return response.status, json.loads(response.read())
+            with urllib.request.build_opener(NoRedirect()).open(request, timeout=timeout) as response:
+                return response.status, json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
-            exc.read()
-            raise AdapterError("provider HTTP %s" % exc.code) from None
+            try:
+                exc.read()
+            except Exception:
+                pass
+            raise AdapterError("provider HTTP %s" % exc.code) from exc
         except urllib.error.URLError as exc:
             raise AdapterError("provider unreachable") from exc
+        except json.JSONDecodeError as exc:
+            raise AdapterError("provider returned invalid JSON") from exc
 
 
 def _headers(provider, key):
@@ -133,6 +208,13 @@ def _extract_json_object(text):
     return raw[start : end + 1]
 
 
+def _reasoning_effort():
+    effort = os.environ.get("CONTROLLED_AI_OPENAI_REASONING_EFFORT", "none").strip() or "none"
+    if effort != "none":
+        raise ProviderConfigError("Luna reasoning effort must be none; got %r" % effort)
+    return effort
+
+
 class ProviderActor:
     def __init__(self, config, prompt, transport=None):
         self.config, self.prompt = config, prompt
@@ -160,10 +242,10 @@ class ProviderActor:
         return Decision(parse_action(parsed), parsed, usage)
 
     def _check_served_model(self, reported):
-        if self.config.provider == "openai" and not str(reported).startswith("gpt-5.6-luna"):
-            raise ProviderConfigError("openai served %r instead of gpt-5.6-luna" % reported)
-        if self.config.provider == "anthropic" and "haiku-4-5" not in str(reported) and "haiku-4.5" not in str(reported):
-            raise ProviderConfigError("anthropic served %r instead of Haiku 4.5" % reported)
+        if not served_model_allowed(self.config.provider, reported):
+            raise ProviderConfigError(
+                "provider returned an unapproved model: %s" % reported
+            )
 
     def _payload(self, observation):
         user = json.dumps(observation, sort_keys=True)
@@ -180,10 +262,12 @@ class ProviderActor:
                 {"role": "system", "content": self.prompt},
                 {"role": "user", "content": user},
             ],
-            "max_tokens": 256,
         }
         if "chat/completions" in self.config.endpoint:
+            payload["max_completion_tokens"] = 256
+            payload["reasoning_effort"] = _reasoning_effort()
             return payload
+        payload["max_tokens"] = 256
         payload["response_format"] = {"type": "json_object"}
         return payload
 
@@ -216,16 +300,15 @@ class XAIActor(OpenAIActor):
 def describe_setup():
     rows = []
     for provider, default_model in (("openai", OPENAI_MODEL), ("anthropic", ANTHROPIC_MODEL)):
-        env_name = "CONTROLLED_AI_OPENAI_MODEL" if provider == "openai" else "CONTROLLED_AI_ANTHROPIC_MODEL"
-        requested = os.environ.get(env_name, default_model).strip()
         try:
-            ProviderConfig(provider, requested, KEY_ENV[provider], DEFAULT_ENDPOINTS[provider], "dry-run")
+            model = pinned_model(provider)
             allowed, error = True, None
         except ProviderConfigError as exc:
+            model = os.environ.get(MODEL_ENV[provider], default_model)
             allowed, error = False, str(exc)
         rows.append({
             "provider": provider,
-            "model": requested,
+            "model": model,
             "model_allowed": allowed,
             "key_present": bool(os.environ.get(KEY_ENV[provider], "").strip()),
             "live_calls_allowed": live_calls_allowed(),
@@ -235,4 +318,5 @@ def describe_setup():
 
 
 if __name__ == "__main__":
+    load_env()
     print(json.dumps(describe_setup(), indent=2, sort_keys=True))
