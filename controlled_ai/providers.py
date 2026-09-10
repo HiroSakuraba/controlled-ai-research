@@ -131,3 +131,108 @@ def _extract_json_object(text):
     if start < 0 or end <= start:
         raise AdapterError("model output was not a JSON object")
     return raw[start : end + 1]
+
+
+class ProviderActor:
+    def __init__(self, config, prompt, transport=None):
+        self.config, self.prompt = config, prompt
+        self.transport = transport or HttpTransport()
+        self.last_reported_model = None
+
+    def decide(self, observation):
+        require_live()
+        key = os.environ.get(self.config.api_key_env)
+        if not key:
+            raise ProviderDisabled("missing API key")
+        payload = self._payload(observation)
+        status, data = self.transport.post(
+            self.config.endpoint,
+            _headers(self.config.provider, key),
+            payload,
+        )
+        if status != 200 or not isinstance(data, dict):
+            raise AdapterError("provider returned %s" % status)
+        reported = data.get("model") or self.config.model
+        self._check_served_model(reported)
+        self.last_reported_model = reported
+        raw, usage = self._normalize(data)
+        parsed = _extract_json_object(raw)
+        return Decision(parse_action(parsed), parsed, usage)
+
+    def _check_served_model(self, reported):
+        if self.config.provider == "openai" and not str(reported).startswith("gpt-5.6-luna"):
+            raise ProviderConfigError("openai served %r instead of gpt-5.6-luna" % reported)
+        if self.config.provider == "anthropic" and "haiku" not in str(reported):
+            raise ProviderConfigError("anthropic served %r instead of Haiku 4.5" % reported)
+
+    def _payload(self, observation):
+        user = json.dumps(observation, sort_keys=True)
+        if self.config.provider == "anthropic":
+            return {
+                "model": self.config.model,
+                "max_tokens": 256,
+                "system": self.prompt,
+                "messages": [{"role": "user", "content": user}],
+            }
+        payload = {
+            "model": self.config.model,
+            "messages": [
+                {"role": "system", "content": self.prompt},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": 256,
+        }
+        if "chat/completions" in self.config.endpoint:
+            return payload
+        payload["response_format"] = {"type": "json_object"}
+        return payload
+
+    def _normalize(self, data):
+        raise AdapterError("provider response parser is not configured")
+
+
+class OpenAIActor(ProviderActor):
+    def _normalize(self, data):
+        if data.get("choices"):
+            raw = data["choices"][0]["message"]["content"]
+            usage = data.get("usage") or {}
+            return raw, Usage(usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), 0)
+        raw = data["output"][0]["content"][0]["text"]
+        usage = data.get("usage") or {}
+        return raw, Usage(usage.get("input_tokens", 0), usage.get("output_tokens", 0), usage.get("reasoning_tokens", 0))
+
+
+class AnthropicActor(ProviderActor):
+    def _normalize(self, data):
+        raw = data["content"][0]["text"]
+        usage = data.get("usage") or {}
+        return raw, Usage(usage.get("input_tokens", 0), usage.get("output_tokens", 0), usage.get("thinking_tokens", 0))
+
+
+class XAIActor(OpenAIActor):
+    pass
+
+
+def describe_setup():
+    rows = []
+    for provider, default_model in (("openai", OPENAI_MODEL), ("anthropic", ANTHROPIC_MODEL)):
+        env_name = "CONTROLLED_AI_OPENAI_MODEL" if provider == "openai" else "CONTROLLED_AI_ANTHROPIC_MODEL"
+        requested = os.environ.get(env_name, default_model).strip()
+        try:
+            ProviderConfig(provider, requested, KEY_ENV[provider], DEFAULT_ENDPOINTS[provider], "dry-run")
+            allowed, error = True, None
+        except ProviderConfigError as exc:
+            allowed, error = False, str(exc)
+        rows.append({
+            "provider": provider,
+            "model": requested,
+            "model_allowed": allowed,
+            "key_present": bool(os.environ.get(KEY_ENV[provider], "").strip()),
+            "live_calls_allowed": live_calls_allowed(),
+            "error": error,
+        })
+    return {"claim": "Provider setup only. No network call. No key values.", "providers": rows}
+
+
+if __name__ == "__main__":
+    print(json.dumps(describe_setup(), indent=2, sort_keys=True))
