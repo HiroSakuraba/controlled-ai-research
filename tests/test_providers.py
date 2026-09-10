@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from controlled_ai.adapters import AdapterError
+from controlled_ai.provider_report import setup_report, write_setup_report
 from controlled_ai.providers import (
     ANTHROPIC_MODEL,
     OPENAI_MODEL,
@@ -231,6 +232,41 @@ class IsolatedGateTests(unittest.TestCase):
         with self.assertRaises(ProviderDisabled):
             actor.decide({})
         os.environ.pop("OPENAI_API_KEY", None)
+
+
+class SetupReportTests(unittest.TestCase):
+    def tearDown(self):
+        for key in (
+            "CONTROLLED_AI_ENABLE_NETWORK",
+            "CONTROLLED_AI_VALIDATE_PROVIDER_WIRE",
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "CONTROLLED_AI_OPENAI_REASONING_EFFORT",
+        ):
+            os.environ.pop(key, None)
+
+    def test_report_has_readiness_and_omits_keys(self):
+        os.environ["OPENAI_API_KEY"] = "sk-test-openai"
+        os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test"
+        report = setup_report()
+        blob = json.dumps(report)
+        self.assertNotIn("sk-test-openai", blob)
+        self.assertNotIn("sk-ant-test", blob)
+        self.assertFalse(report["network_called"])
+        self.assertEqual(report["status"], "ready_for_live_after_flags")
+        self.assertTrue(report["pins_ok"])
+        self.assertIn("request_contract", report)
+        self.assertEqual(len(report["providers"]), 2)
+
+    def test_write_setup_report_creates_local_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "provider-setup-local.json"
+            report = write_setup_report(path)
+            saved = json.loads(path.read_text())
+            self.assertEqual(report["written_to"], str(path))
+            self.assertEqual(saved["claim"], report["claim"])
+            self.assertFalse(saved["network_called"])
+            self.assertNotIn("written_to", saved)
 
 
 if __name__ == "__main__":
