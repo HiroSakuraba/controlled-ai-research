@@ -17,7 +17,7 @@ chosen provider. Record that validation with the run configuration. API keys
 belong in the process environment or a secret manager, never in this repository
 or an episode log.
 
-The checked-in client is pin-only: OpenAI must serve `gpt-5.6-luna`, Anthropic must serve Haiku 4.5. Other model identifiers are rejected before the request and again if the provider response names a different model. See [provider setup](provider-setup.md).
+The checked-in client is pin-only: OpenAI requests `gpt-5.6-luna` with `reasoning_effort=none` and `max_completion_tokens`; Anthropic requests `claude-haiku-4-5-20251001`. Dated Luna or Haiku response ids are accepted; Sol, Terra, Sonnet, and Opus are rejected. `.env` is loaded as literal KEY=value only. Transport errors keep the original exception as `__cause__`. See [provider setup](provider-setup.md).
 
 ## Treatments and outcomes
 
