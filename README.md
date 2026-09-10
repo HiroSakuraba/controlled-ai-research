@@ -48,6 +48,7 @@ Python 3.10 or later; standard library only. From the repository root:
 ```sh
 python3 -m unittest discover -s tests -v
 python3 -m controlled_ai
+python3 -m controlled_ai.providers
 ```
 
 The first command tests the controls. The second prints a JSON report with exact
@@ -180,11 +181,15 @@ that a failed callback does not consume the permit, a disputed effect remains
 available for reconciliation, and only one concurrent dispatch succeeds.
 
 `controlled_ai/providers.py` and the versioned files in `prompts/` prepare the
-future API boundary without making API calls. Prompt hashes are tested. Provider
-calls require two explicit environment switches, and the repository contains no
-keys or provider credits. The wire format must be validated against the selected
-provider before either switch is enabled; the full procedure is in the model
-experiment protocol.
+future API boundary without making API calls. Prompt hashes are tested. The
+client is pin-only: OpenAI must serve `gpt-5.6-luna`, Anthropic must serve
+`claude-haiku-4-5-20251001`. Sol, Terra, Sonnet, and Opus are rejected. Copy
+`.env.example` to `.env`, add keys locally, then run
+`python3 -m controlled_ai.providers` to confirm pins without hitting the
+network. Live calls also need both `CONTROLLED_AI_ENABLE_NETWORK=1` and
+`CONTROLLED_AI_VALIDATE_PROVIDER_WIRE=1`. Leave those unset until the dry-run
+looks right. Keys never enter git or episode records. See
+[provider setup](docs/provider-setup.md) and the model experiment protocol.
 
 ## Evaluator custody fixture
 
@@ -199,6 +204,7 @@ experiment protocol.
 - [Architecture](docs/architecture.md)
 - [Threat model](docs/threat-model.md)
 - [Model experiment protocol](docs/model-experiment-protocol.md)
+- [Provider setup](docs/provider-setup.md)
 - [Reproducibility manifest](reproducibility-manifest.json)
 - [Contributor guidance](CONTRIBUTING.md)
 - [Release checklist](docs/release-checklist.md)
