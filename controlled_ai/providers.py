@@ -127,7 +127,7 @@ def _extract_json_object(text):
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
         raw = "\n".join(lines).strip()
-    start, end = raw.find("{'), raw.rfind("}")
+    start, end = raw.find("{"), raw.rfind("}")
     if start < 0 or end <= start:
         raise AdapterError("model output was not a JSON object")
     return raw[start : end + 1]
@@ -162,7 +162,7 @@ class ProviderActor:
     def _check_served_model(self, reported):
         if self.config.provider == "openai" and not str(reported).startswith("gpt-5.6-luna"):
             raise ProviderConfigError("openai served %r instead of gpt-5.6-luna" % reported)
-        if self.config.provider == "anthropic" and "haiku" not in str(reported):
+        if self.config.provider == "anthropic" and "haiku-4-5" not in str(reported) and "haiku-4.5" not in str(reported):
             raise ProviderConfigError("anthropic served %r instead of Haiku 4.5" % reported)
 
     def _payload(self, observation):
