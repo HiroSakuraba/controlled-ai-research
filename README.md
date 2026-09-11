@@ -216,3 +216,9 @@ looks right. Keys never enter git or episode records. See
 For a clean local verification run: `make test`, `make verify`.
 
 The latest hardening pass adds a separate idempotent effect receiver and monotonic signed handoff records. The HMAC signer is deliberately a fixture; the interface is designed to be replaced by an external public-key signer/verifier. Evaluator custody tasks now vary across hidden compositions of one to three interpreter operations.
+
+## Offline perturbation map and provider audit
+
+`python3 -m controlled_ai.landscape` enumerates completed-harm and useful-work reachability with each arm's specified monitor included, across four fixture families and horizons 1–6. The [recorded map](reports/perturbation-map.json) separates completed harm from unresolved pending effects and from fixed script outcomes. See the [study design](docs/perturbation-study.md).
+
+The [provider audit](docs/provider-audit.md) found that the live dollar cap is checked after a cell and malformed paid output can lose token usage. Those issues remain open; the offline map does not make the paid driver budget-safe.
