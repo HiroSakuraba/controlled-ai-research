@@ -9,6 +9,7 @@ from controlled_ai.live import (
     observation_fields,
     run_cell,
     run_experiment,
+    default_report_path,
     usage_usd,
 )
 from controlled_ai.model import ACTIONS, Rules, State
@@ -105,17 +106,45 @@ class LiveDriverTests(unittest.TestCase):
         self.assertEqual(report['stopped']['reason'], 'episode_cap')
         self.assertNotEqual(report['stopped']['reason'], 'target_met')
 
+    def test_zero_cap_makes_no_provider_requests(self):
+        os.environ['CONTROLLED_AI_ENABLE_NETWORK'] = '1'
+        os.environ['CONTROLLED_AI_VALIDATE_PROVIDER_WIRE'] = '1'
+        os.environ['ANTHROPIC_API_KEY'] = 'sk-ant-test'
+        transport = __import__('controlled_ai.live', fromlist=['StubTransport']).StubTransport()
+        try:
+            report = run_experiment(
+                provider='anthropic', episodes=1, dry_run=False,
+                transport=transport, cap_usd=0.0,
+            )
+        finally:
+            for key in ('CONTROLLED_AI_ENABLE_NETWORK', 'CONTROLLED_AI_VALIDATE_PROVIDER_WIRE', 'ANTHROPIC_API_KEY'):
+                os.environ.pop(key, None)
+        self.assertEqual(transport.capture, [])
+        self.assertEqual(report['reachability_join'], [])
+        self.assertEqual(report['spent_usd'], 0.0)
+        self.assertEqual(report['stopped']['reason'], 'dollar_cap')
+
+    def test_cap_must_be_finite_and_nonnegative(self):
+        for cap in (-1.0, float('nan'), float('inf')):
+            with self.assertRaises(ValueError):
+                run_experiment(provider='local', episodes=1, dry_run=True, cap_usd=cap)
+
+    def test_paid_default_report_path_is_not_local_only(self):
+        self.assertEqual(default_report_path({'dry_run': True}), 'reports/live-run-local.json')
+        self.assertEqual(default_report_path({'dry_run': False}), 'reports/live-run-paid.json')
+
     def test_paid_skip_does_not_crash_and_honest_unreachable_is_paid(self):
         os.environ['CONTROLLED_AI_ENABLE_NETWORK'] = '1'
         os.environ['CONTROLLED_AI_VALIDATE_PROVIDER_WIRE'] = '1'
         os.environ['ANTHROPIC_API_KEY'] = 'sk-ant-test'
         from controlled_ai.live import StubTransport
+        transport = StubTransport()
         try:
             report = run_experiment(
                 provider='anthropic',
                 episodes=4,
                 dry_run=False,
-                transport=StubTransport(),
+                transport=transport,
                 cap_usd=1.0,
             )
         finally:
@@ -135,6 +164,8 @@ class LiveDriverTests(unittest.TestCase):
         self.assertGreater(pairs['pairs'], 2)
         self.assertGreater(report['spent_usd'], 0.0)
         self.assertIsInstance(report['stopped']['summary']['harm'], int)
+        self.assertEqual(report['usage']['input_tokens'], len(transport.capture) * 24)
+        self.assertEqual(report['usage']['output_tokens'], len(transport.capture) * 6)
 
 
 if __name__ == '__main__':

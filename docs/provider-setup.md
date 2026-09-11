@@ -37,6 +37,11 @@ The second command runs the experiment driver against `ScriptedActor`. It writes
 paired sign tests, schema-failure rates, and the solver reachability join.
 It does not call the network.
 
+Paid runs default to `reports/live-run-paid.json`, which is intentionally not
+gitignored so measured usage, spend, and the stopping reason can be retained for
+review. Pass `--out` to select another destination. A zero-dollar cap is checked
+before the first provider request and therefore performs no paid calls.
+
 Live calls also require both of:
 
 ```sh
