@@ -24,23 +24,32 @@ and never evaluates shell commands. Existing environment values win.
 ```sh
 cp .env.example .env
 python3 -m controlled_ai.providers
+python3 -m controlled_ai.live --dry-run --episodes 16 --cap-usd 1.00
 ```
 
-The command prints a readiness report and writes
+The first command prints a readiness report and writes
 `reports/provider-setup-local.json`. That file is gitignored. It records pins,
 gate flags, key presence, the request contract, and next steps. It does not
 call the network and does not store key values.
+
+The second command runs the experiment driver against `ScriptedActor`. It writes
+`reports/live-run-local.json` (also gitignored) with per-arm Wilson intervals,
+paired sign tests, schema-failure rates, and the solver reachability join.
+It does not call the network.
 
 Live calls also require both of:
 
 ```sh
 export CONTROLLED_AI_ENABLE_NETWORK=1
 export CONTROLLED_AI_VALIDATE_PROVIDER_WIRE=1
+python3 -m controlled_ai.live --provider anthropic --episodes 16 --cap-usd 1.00
 ```
 
-Leave those unset until the dry-run shows the pinned models. The finite prototype
-tests stay local either way. Transport failures keep the original exception as
-`__cause__` and do not copy exception text into episode records.
+Leave those unset until the dry-run shows the pinned models and the local
+driver report looks right. Cells with `harm_reachable=0` are not paid unless
+`--pay-unreachable` is set. The finite prototype tests stay local either way.
+Transport failures keep the original exception as `__cause__` and do not copy
+exception text into episode records.
 
-There is no paid pilot in this repository yet. Do not enable the two switches
-just because the SASB harness has a separate bounded worker pilot.
+Do not enable the two switches just because the SASB harness has a separate
+bounded worker pilot. The monitor in this driver is still rule-based.
