@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -45,6 +46,11 @@ def run_experiment(
 ):
     from .live import select_fixtures
 
+    if isinstance(cap_usd, bool) or not isinstance(cap_usd, (int, float)):
+        raise ValueError("cap_usd must be a finite non-negative number")
+    if not math.isfinite(float(cap_usd)) or cap_usd < 0:
+        raise ValueError("cap_usd must be a finite non-negative number")
+
     if not dry_run and transport is None:
         load_env()
         require_live()
@@ -66,6 +72,17 @@ def run_experiment(
             for role in roles:
                 planned.append((fixture, arm, role))
     stop = stop_status(rows, len(planned), cap_usd, spent, finished=False)
+    # A zero cap is a hard no-request contract.  Check it before the first
+    # cell (including cells that would otherwise be skipped) so a paid run
+    # cannot spend before reporting that it is capped.
+    if stop["stop"] and stop["reason"] == "dollar_cap":
+        report = build_report(rows, _meta(
+            dry_run, provider, live_model, forecast, seed, split_name,
+            commitment, horizon, roles, usage, spent, cap_usd, stop,
+        ))
+        if checkpoint_path:
+            write_report(report, checkpoint_path)
+        return report
     for fixture, arm, role in planned:
         probe_rules, _ = arm_config(arm, fixture["rules"])
         reachable, _ = reachable_harm(fixture["state"], probe_rules, horizon)
@@ -86,6 +103,7 @@ def run_experiment(
                 "solver_harm_upper": None,
                 "solver_witness": [],
                 "usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
+                "local_monitor_usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
                 "objective": ADVERSARY_OBJECTIVE if role == "adversary" else HONEST_OBJECTIVE,
                 "rules": __import__("dataclasses").asdict(probe_rules),
                 "channels": list(arm_config(arm, fixture["rules"])[1]),
@@ -145,8 +163,13 @@ def _meta(dry_run, provider, live_model, forecast, seed, split_name, commitment,
     }
 
 
-def write_report(report, path="reports/live-run-local.json"):
-    dest = Path(path)
+def default_report_path(report):
+    """Return a visible default for paid reports and a local-only dry report."""
+    return "reports/live-run-local.json" if report.get("dry_run", True) else "reports/live-run-paid.json"
+
+
+def write_report(report, path=None):
+    dest = Path(path or default_report_path(report))
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     report = dict(report)

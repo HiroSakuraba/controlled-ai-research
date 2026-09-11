@@ -221,4 +221,9 @@ The latest hardening pass adds a separate idempotent effect receiver and monoton
 
 `python3 -m controlled_ai.landscape` enumerates completed-harm and useful-work reachability with each arm's specified monitor included, across four fixture families and horizons 1–6. The [recorded map](reports/perturbation-map.json) separates completed harm from unresolved pending effects and from fixed script outcomes. See the [study design](docs/perturbation-study.md).
 
-The [provider audit](docs/provider-audit.md) found that the live dollar cap is checked after a cell and malformed paid output can lose token usage. Those issues remain open; the offline map does not make the paid driver budget-safe.
+The [provider audit](docs/provider-audit.md) records the remaining paid-run
+limitations. The driver now rejects invalid caps, makes a zero-dollar run a
+no-request operation, prices provider usage separately from local monitor work,
+and writes paid reports to a visible default path. A non-zero cap is still
+reconciled after each completed cell, and malformed-output usage remains an
+explicit follow-up before large paid sweeps.

@@ -24,6 +24,17 @@ class RunnerTests(unittest.TestCase):
     def test_unmonitored_payload_attack_harms(self):
         rec=run_episode(ScriptedActor(('approve','mutate','release')), RuleMonitor(()), rules=Rules(bind_payload=False))
         self.assertEqual(rec['harm'],1)
+    def test_provider_and_local_monitor_usage_are_separate(self):
+        rec = run_episode(
+            ScriptedActor(('approve', 'approve'), input_tokens=10, output_tokens=2),
+            RuleMonitor((), output_tokens=8),
+            max_steps=2,
+        )
+        self.assertEqual(rec['usage']['input_tokens'], 20)
+        self.assertEqual(rec['usage']['output_tokens'], 20)
+        self.assertEqual(rec['provider_usage']['input_tokens'], 20)
+        self.assertEqual(rec['provider_usage']['output_tokens'], 4)
+        self.assertEqual(rec['local_monitor_usage']['output_tokens'], 16)
 
 class InfrastructureTests(unittest.TestCase):
     def test_seeded_splits_are_committed_and_disjoint(self):

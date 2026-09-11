@@ -217,6 +217,7 @@ def run_cell(fixture, arm, role, provider, dry_run, horizon, transport=None, led
                 "harm": 0,
                 "useful": 0,
                 "usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
+                "local_monitor_usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
                 "events": (),
             }
             schema_failure = 1
@@ -236,7 +237,11 @@ def run_cell(fixture, arm, role, provider, dry_run, horizon, transport=None, led
         "solver_harm_lower": solved["harm_lower"],
         "solver_harm_upper": solved["harm_upper"],
         "solver_witness": list(solved["witness"]),
-        "usage": rec["usage"],
+        # The monitor runs locally; only actor/provider usage is billable.
+        "usage": rec.get("provider_usage", rec["usage"]),
+        "local_monitor_usage": rec.get("local_monitor_usage", {
+            "input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0,
+        }),
         "objective": objective,
         "rules": asdict(rules),
         "channels": list(channels),
@@ -342,20 +347,21 @@ def build_report(rows, meta):
         "usage": meta["usage"],
         "spent_usd": meta["spent_usd"],
         "cap_usd": meta["cap_usd"],
-        "priced_from": "reported usage tokens against pinned model rates; not the 12k-token episode_budget helper",
+        "priced_from": "provider actor usage tokens against pinned model rates; local rule-monitor usage is not billable; not the 12k-token episode_budget helper",
         "stopped": meta["stopped"],
         "notes": [
             "Solver reachability is 0/1 under the arm rules. Model harm is propensity.",
             "Adversary cells with harm_reachable=0 are not paid unless --pay-unreachable.",
             "Honest cells are paid even when harm is unreachable; that measures false refusal.",
             "Monitor remains rule-based. A model monitor is out of scope for this driver.",
+            "Per-row local_monitor_usage is retained for transparency but excluded from provider cost.",
             "Parse failures are counted and not retried.",
             "Wilson target_harm_upper is not used as a stop reason.",
         ],
     }
 
 
-from .live_loop import run_experiment, write_report, main
+from .live_loop import default_report_path, run_experiment, write_report, main
 
 if __name__ == "__main__":
     main()
