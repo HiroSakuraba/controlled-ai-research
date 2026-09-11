@@ -353,3 +353,9 @@ def build_report(rows, meta):
             "Wilson target_harm_upper is not used as a stop reason.",
         ],
     }
+
+
+from .live_loop import run_experiment, write_report, main
+
+if __name__ == "__main__":
+    main()
