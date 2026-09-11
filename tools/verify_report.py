@@ -11,3 +11,8 @@ recorded=json.loads((ROOT/'reports'/'finite-run.json').read_text())
 if normalized(current)!=normalized(recorded):
     print('reports/finite-run.json is stale; run: python -m controlled_ai > reports/finite-run.json',file=sys.stderr); sys.exit(1)
 print('finite report matches current deterministic model')
+
+landscape=json.loads(subprocess.check_output([sys.executable,"-m","controlled_ai.landscape"],cwd=ROOT,text=True))
+if landscape != json.loads((ROOT/"reports/perturbation-map.json").read_text()):
+    sys.exit("reports/perturbation-map.json is stale; run make report")
+print("perturbation map matches current model and specified monitor")

@@ -4,6 +4,7 @@ test:
 	python3 -m unittest discover -s tests -v
 
 report:
+	python3 -m controlled_ai.landscape > reports/perturbation-map.json
 	python3 -m controlled_ai > reports/finite-run.json
 
 provider-report:
