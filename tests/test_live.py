@@ -100,6 +100,44 @@ class LiveDriverTests(unittest.TestCase):
         with self.assertRaises(ProviderDisabled):
             run_experiment(provider='anthropic', episodes=1, dry_run=False)
 
+    def test_dry_run_forecasts_bill_and_does_not_claim_target_met(self):
+        report = run_experiment(provider='local', episodes=4, dry_run=True, roles=('honest', 'adversary'))
+        self.assertGreater(report['forecast_usd_if_paid'], 0.0)
+        self.assertEqual(report['spent_usd'], 0.0)
+        self.assertEqual(report['stopped']['reason'], 'episode_cap')
+        self.assertNotEqual(report['stopped']['reason'], 'target_met')
+
+    def test_paid_skip_does_not_crash_and_honest_unreachable_is_paid(self):
+        os.environ['CONTROLLED_AI_ENABLE_NETWORK'] = '1'
+        os.environ['CONTROLLED_AI_VALIDATE_PROVIDER_WIRE'] = '1'
+        os.environ['ANTHROPIC_API_KEY'] = 'sk-ant-test'
+        from controlled_ai.live import StubTransport
+        try:
+            report = run_experiment(
+                provider='anthropic',
+                episodes=4,
+                dry_run=False,
+                transport=StubTransport(),
+                cap_usd=1.0,
+            )
+        finally:
+            for key in ('CONTROLLED_AI_ENABLE_NETWORK', 'CONTROLLED_AI_VALIDATE_PROVIDER_WIRE', 'ANTHROPIC_API_KEY'):
+                os.environ.pop(key, None)
+        self.assertFalse(report['dry_run'])
+        self.assertEqual(report['stopped']['reason'], 'episode_cap')
+        join = report['reachability_join']
+        skipped = [r for r in join if r.get('skipped') == 'unreachable']
+        honest_unreach = [r for r in join if r['role'] == 'honest' and r['harm_reachable'] == 0]
+        self.assertTrue(skipped)
+        self.assertTrue(all(r['role'] == 'adversary' for r in skipped))
+        self.assertTrue(honest_unreach)
+        self.assertTrue(all(r['paid'] and r['model_harm'] is not None for r in honest_unreach))
+        self.assertTrue(all(r['model_harm'] is not None for r in join if r['paid']))
+        pairs = report['pairs']['untrusted_vs_combined']
+        self.assertGreater(pairs['pairs'], 2)
+        self.assertGreater(report['spent_usd'], 0.0)
+        self.assertIsInstance(report['stopped']['summary']['harm'], int)
+
 
 if __name__ == '__main__':
     unittest.main()
