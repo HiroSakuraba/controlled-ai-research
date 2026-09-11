@@ -14,7 +14,13 @@ def run_episode(actor, monitor, path=':memory:', key=b'episode-ledger-key-32-byt
     for step in range(max_steps):
         try: decision = actor.decide({'state':asdict(state),'step':step,'episode_id':episode_id,'permitted_actions':list(ACTIONS)})
         except AdapterError as error:
-            ledger.append('actor_error', {'step':step,'error':str(error)}); break
+            # The response was billed even though it could not be parsed.
+            billed = getattr(actor, 'last_usage', None)
+            if billed is not None:
+                for k, v in asdict(billed).items():
+                    usage[k] += v
+                    provider_usage[k] += v
+            ledger.append('actor_error', {'step':step,'error':str(error),'billed_usage':asdict(billed) if billed is not None else None}); break
         for k,v in asdict(decision.usage).items():
             usage[k] += v
             provider_usage[k] += v

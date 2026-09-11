@@ -43,6 +43,8 @@ def run_experiment(
     pay_unreachable=False,
     transport=None,
     checkpoint_path=None,
+    transcript_path=None,
+    replay_path=None,
 ):
     from .live import select_fixtures
 
@@ -51,6 +53,11 @@ def run_experiment(
     if not math.isfinite(float(cap_usd)) or cap_usd < 0:
         raise ValueError("cap_usd must be a finite non-negative number")
 
+    replay = None
+    if replay_path:
+        from .transcript import ReplayIndex
+        replay = ReplayIndex(replay_path)
+        dry_run, transport = True, None
     if not dry_run and transport is None:
         load_env()
         require_live()
@@ -71,6 +78,12 @@ def run_experiment(
         for arm in ARMS:
             for role in roles:
                 planned.append((fixture, arm, role))
+    if transcript_path:
+        from .transcript import write_header
+        write_header(transcript_path, model=live_model or model, provider=provider, seed=seed,
+                     split=split_name, evaluation_seed_commitment=commitment, horizon=horizon,
+                     arms=list(ARMS), roles=list(roles), episodes=len(fixtures),
+                     cap_usd=cap_usd, dry_run=dry_run, replay=bool(replay_path))
     stop = stop_status(rows, len(planned), cap_usd, spent, finished=False)
     # A zero cap is a hard no-request contract.  Check it before the first
     # cell (including cells that would otherwise be skipped) so a paid run
@@ -87,6 +100,10 @@ def run_experiment(
         probe_rules, _ = arm_config(arm, fixture["rules"])
         reachable, _ = reachable_harm(fixture["state"], probe_rules, horizon)
         pay = not dry_run and should_pay(reachable, role, pay_unreachable)
+        if replay is not None:
+            pay = (fixture["id"], arm, role) in replay.cells
+            if not pay:
+                continue
         if not pay and not dry_run:
             rows.append({
                 "episode": fixture["id"],
@@ -116,8 +133,9 @@ def run_experiment(
                     commitment, horizon, roles, usage, spent, cap_usd, stop,
                 )), checkpoint_path)
             continue
-        cell_dry = dry_run or not pay
-        row = run_cell(fixture, arm, role, provider, cell_dry, horizon, transport)
+        cell_dry = (dry_run or not pay) and replay is None
+        row = run_cell(fixture, arm, role, provider, cell_dry, horizon, transport,
+                       transcript_path=transcript_path, replay=replay)
         row["paid"] = bool(pay and not dry_run)
         for key in ("input_tokens", "output_tokens", "reasoning_tokens", "retries"):
             usage[key] = usage.get(key, 0) + int(row["usage"].get(key, 0))
@@ -188,12 +206,21 @@ def main(argv=None):
     parser.add_argument("--role", choices=("honest", "adversary", "both"), default="both")
     parser.add_argument("--pay-unreachable", action="store_true")
     parser.add_argument("--fake-transport", action="store_true", help="Stub 200 through the real provider actor")
+    parser.add_argument("--transcript", default=None,
+                        help="JSONL path for prompts, raw responses and actions (default: reports/transcripts/<run>.jsonl on paid runs)")
+    parser.add_argument("--replay", default=None,
+                        help="Replay a committed transcript: no API key, no network, no spend")
     parser.add_argument("--out", default=None)
     args = parser.parse_args(argv)
     dry_run = args.dry_run or args.provider == "local"
     if args.fake_transport:
         dry_run = False
     roles = ROLES if args.role == "both" else (args.role,)
+    transcript_path = args.transcript
+    if transcript_path is None and not dry_run and not args.replay:
+        from .transcript import default_path
+        transcript_path = default_path(
+            ANTHROPIC_MODEL if args.provider != "openai" else OPENAI_MODEL, args.seed, args.split)
     out = args.out or ("reports/live-run-local.json" if dry_run else "reports/live-run-paid.json")
     transport = StubTransport(provider=args.provider) if args.fake_transport else None
     report = run_experiment(
@@ -207,6 +234,8 @@ def main(argv=None):
         pay_unreachable=args.pay_unreachable,
         transport=transport,
         checkpoint_path=out,
+        transcript_path=transcript_path,
+        replay_path=args.replay,
     )
     report = write_report(report, out)
     print(json.dumps(report, indent=2, sort_keys=True))
