@@ -15,3 +15,6 @@ verify:
 
 live-dry:
 	python3 -m controlled_ai.live --dry-run --episodes 16 --cap-usd 1.00
+
+replay-check:
+	python3 -m unittest tests.test_replay_regression -v

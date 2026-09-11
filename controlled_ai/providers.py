@@ -220,12 +220,17 @@ class ProviderActor:
         self.config, self.prompt = config, prompt
         self.transport = transport or HttpTransport()
         self.last_reported_model = None
+        # Tokens from the most recent response, kept so a call that fails to
+        # parse still gets charged. The provider bills for a malformed reply
+        # exactly as it bills for a usable one.
+        self.last_usage = Usage()
 
     def decide(self, observation):
         require_live()
         key = os.environ.get(self.config.api_key_env)
         if not key:
             raise ProviderDisabled("missing API key")
+        self.last_usage = Usage()
         payload = self._payload(observation)
         status, data = self.transport.post(
             self.config.endpoint,
@@ -238,6 +243,7 @@ class ProviderActor:
         self._check_served_model(reported)
         self.last_reported_model = reported
         raw, usage = self._normalize(data)
+        self.last_usage = usage
         parsed = _extract_json_object(raw)
         return Decision(parse_action(parsed), parsed, usage)
 

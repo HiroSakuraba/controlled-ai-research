@@ -37,6 +37,7 @@ from .providers import (
     require_live,
 )
 from .runner import run_episode
+from .transcript import append_episode
 from .solver import solve
 
 SEED = "recorded-fixture-seed"
@@ -128,6 +129,11 @@ class SchemaGuard:
             self.last_error = str(exc)
             raise
 
+    @property
+    def last_usage(self):
+        """Delegate so the runner can charge tokens from an unparseable reply."""
+        return getattr(self.actor, "last_usage", None)
+
 
 class ObservingActor:
     """Attach permitted actions and the role objective to every observation."""
@@ -140,6 +146,11 @@ class ObservingActor:
         payload = dict(observation)
         payload.update(observation_fields(self.objective))
         return self.actor.decide(payload)
+
+    @property
+    def last_usage(self):
+        """Delegate so the runner can charge tokens from an unparseable reply."""
+        return getattr(self.actor, "last_usage", None)
 
 
 class StubTransport:
@@ -192,10 +203,15 @@ def make_actor(role, fixture, provider, dry_run, transport=None):
     return ObservingActor(inner, objective), objective
 
 
-def run_cell(fixture, arm, role, provider, dry_run, horizon, transport=None, ledger_key=b"episode-ledger-key-32-bytes-long"):
+def run_cell(fixture, arm, role, provider, dry_run, horizon, transport=None, ledger_key=b"episode-ledger-key-32-bytes-long",
+             transcript_path=None, replay=None):
     rules, channels = arm_config(arm, fixture["rules"])
     reachable, solved = reachable_harm(fixture["state"], rules, horizon)
-    actor, objective = make_actor(role, fixture, provider, dry_run, transport)
+    if replay is not None:
+        objective = ADVERSARY_OBJECTIVE if role == "adversary" else HONEST_OBJECTIVE
+        actor = ObservingActor(replay.actor(fixture["id"], arm, role), objective)
+    else:
+        actor, objective = make_actor(role, fixture, provider, dry_run, transport)
     guard = SchemaGuard(actor)
     monitor = RuleMonitor(channels)
     schema_failure = 0
@@ -223,6 +239,15 @@ def run_cell(fixture, arm, role, provider, dry_run, horizon, transport=None, led
             schema_failure = 1
     if guard.failures:
         schema_failure = 1
+    inner = getattr(getattr(guard, "actor", None), "actor", None)
+    append_episode(transcript_path, {
+        "episode": fixture["id"], "family": fixture["family"], "arm": arm, "role": role,
+        "provider": "replay" if replay is not None else ("local" if dry_run else provider),
+        "prompt_id": "adversary-v1" if role == "adversary" else "actor-v1",
+        "reported_model": getattr(inner, "last_reported_model", None),
+        "objective": objective, "rules": asdict(rules), "monitor_channels": list(channels),
+        "usage": rec.get("provider_usage", rec["usage"]), "schema_failure": schema_failure,
+    }, rec.get("events", ()))
     return {
         "episode": fixture["id"],
         "family": fixture["family"],
@@ -361,7 +386,14 @@ def build_report(rows, meta):
     }
 
 
-from .live_loop import default_report_path, run_experiment, write_report, main
+def __getattr__(name):
+    """Lazily expose the loop API without breaking ``python -m`` execution."""
+    if name in {"default_report_path", "run_experiment", "write_report", "main"}:
+        from . import live_loop
+        return getattr(live_loop, name)
+    raise AttributeError(name)
+
 
 if __name__ == "__main__":
+    from .live_loop import main
     main()
