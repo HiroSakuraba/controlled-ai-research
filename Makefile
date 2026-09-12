@@ -18,3 +18,6 @@ live-dry:
 
 replay-check:
 	python3 -m unittest tests.test_replay_regression -v
+
+expanded-report:
+	python3 -m controlled_ai.expanded > reports/expanded-testing.json

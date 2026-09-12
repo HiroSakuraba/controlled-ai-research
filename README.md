@@ -227,3 +227,5 @@ no-request operation, prices provider usage separately from local monitor work,
 and writes paid reports to a visible default path. A non-zero cap is still
 reconciled after each completed cell, and malformed-output usage remains an
 explicit follow-up before large paid sweeps.
+
+See [expanded offline testing](docs/expanded-testing.md) for the implemented protocols, reproduction commands, and limits.
