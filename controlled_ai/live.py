@@ -184,34 +184,34 @@ def local_actor(role, fixture):
     return ScriptedActor(actions, input_tokens=190, output_tokens=12)
 
 
-def provider_actor(provider, prompt, transport=None):
+def provider_actor(provider, prompt, transport=None, budget=None):
     require_live()
     if provider == "anthropic":
-        return AnthropicActor(haiku_config("actor-v1"), prompt, transport)
+        return AnthropicActor(haiku_config("actor-v1"), prompt, transport, budget=budget)
     if provider == "openai":
-        return OpenAIActor(luna_config("actor-v1"), prompt, transport)
+        return OpenAIActor(luna_config("actor-v1"), prompt, transport, budget=budget)
     raise ValueError("unsupported live provider %r" % provider)
 
 
-def make_actor(role, fixture, provider, dry_run, transport=None):
+def make_actor(role, fixture, provider, dry_run, transport=None, budget=None):
     objective = ADVERSARY_OBJECTIVE if role == "adversary" else HONEST_OBJECTIVE
     if dry_run or provider in ("local", "scripted", None):
         inner = local_actor(role, fixture)
     else:
         prompt = load_prompt("adversary-v1.txt" if role == "adversary" else "actor-v1.txt")
-        inner = provider_actor(provider, prompt, transport)
+        inner = provider_actor(provider, prompt, transport, budget=budget)
     return ObservingActor(inner, objective), objective
 
 
 def run_cell(fixture, arm, role, provider, dry_run, horizon, transport=None, ledger_key=b"episode-ledger-key-32-bytes-long",
-             transcript_path=None, replay=None):
+             transcript_path=None, replay=None, budget=None):
     rules, channels = arm_config(arm, fixture["rules"])
     reachable, solved = reachable_harm(fixture["state"], rules, horizon)
     if replay is not None:
         objective = ADVERSARY_OBJECTIVE if role == "adversary" else HONEST_OBJECTIVE
         actor = ObservingActor(replay.actor(fixture["id"], arm, role), objective)
     else:
-        actor, objective = make_actor(role, fixture, provider, dry_run, transport)
+        actor, objective = make_actor(role, fixture, provider, dry_run, transport, budget=budget)
     guard = SchemaGuard(actor)
     monitor = RuleMonitor(channels)
     schema_failure = 0
@@ -288,13 +288,15 @@ def scored(rows):
     return [r for r in rows if r.get("harm") is not None]
 
 
-def stop_status(rows, planned_n, cap_usd, spent, finished=False):
+def stop_status(rows, planned_n, cap_usd, spent, finished=False, reason=None):
     """Episode cap or dollar cap only. Do not treat Wilson upper=1.0 as a target."""
     kept = scored(rows)
     summary = episode_summary(kept) if kept else {
         "episodes": 0, "harm": 0, "harm_rate": None, "harm_wilson95": None,
         "useful": 0, "useful_rate": None, "useful_wilson95": None,
     }
+    if reason:
+        return {"stop": True, "reason": reason, "summary": summary}
     if spent >= cap_usd:
         return {"stop": True, "reason": "dollar_cap", "summary": summary}
     if finished or len(rows) >= planned_n:
@@ -353,7 +355,7 @@ def build_report(rows, meta):
         }
         for r in rows
     ]
-    return {
+    payload = {
         "claim": meta["claim"],
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "dry_run": meta["dry_run"],
@@ -384,6 +386,13 @@ def build_report(rows, meta):
             "Wilson target_harm_upper is not used as a stop reason.",
         ],
     }
+    budget = meta.get("budget")
+    if budget is not None:
+        payload["budget"] = budget.snapshot() if hasattr(budget, "snapshot") else budget
+        payload["notes"].append(
+            "Live HTTP reserves a local estimate before each request; missing usage retains the reservation."
+        )
+    return payload
 
 
 def __getattr__(name):
