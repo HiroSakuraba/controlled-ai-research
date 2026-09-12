@@ -9,10 +9,12 @@ request was made, and no account access or secret value was inspected.
 
 The follow-up driver now (1) validates finite non-negative caps and exits before
 the first request when the cap is zero, (2) separates provider usage from local
-rule-monitor usage so only billable tokens determine cost, and (3) defaults
+rule-monitor usage so only billable tokens determine cost, (3) defaults
 paid reports to `reports/live-run-paid.json`, while retaining the ignored
-`*-local.json` convention for dry-run diagnostics. The historical reproductions
-below remain as evidence of the pre-fix behavior.
+`*-local.json` convention for dry-run diagnostics, and (4) issues a serial
+pre-request spend permit before each `transport.post`, retaining the
+reservation when usage is missing or the call fails. The historical
+reproductions below remain as evidence of the pre-fix behavior.
 
 ## Findings
 

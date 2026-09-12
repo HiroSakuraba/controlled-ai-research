@@ -8,6 +8,7 @@ import math
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .budget import BudgetExceeded, RequestBudget
 from .live import (
     ADVERSARY_OBJECTIVE,
     ANTHROPIC_MODEL,
@@ -45,6 +46,7 @@ def run_experiment(
     checkpoint_path=None,
     transcript_path=None,
     replay_path=None,
+    max_requests=1024,
 ):
     from .live import select_fixtures
 
@@ -74,6 +76,9 @@ def run_experiment(
     forecast = 0.0
     rows = []
     planned = []
+    budget = None
+    if not dry_run and replay is None and live_model:
+        budget = RequestBudget(cap_usd, live_model, max_requests=max_requests)
     for fixture in fixtures:
         for arm in ARMS:
             for role in roles:
@@ -85,13 +90,27 @@ def run_experiment(
                      arms=list(ARMS), roles=list(roles), episodes=len(fixtures),
                      cap_usd=cap_usd, dry_run=dry_run, replay=bool(replay_path))
     stop = stop_status(rows, len(planned), cap_usd, spent, finished=False)
-    # A zero cap is a hard no-request contract.  Check it before the first
-    # cell (including cells that would otherwise be skipped) so a paid run
-    # cannot spend before reporting that it is capped.
+    # A zero cap, or any ledger that cannot issue a first ticket, is a hard
+    # no-request contract. Check it before the first cell so a paid run cannot
+    # spend before reporting that it is capped.
+    if budget is not None and not budget.can_reserve():
+        stop = stop_status(
+            rows, len(planned), cap_usd, spent,
+            reason=budget.deny_reason() or "dollar_cap",
+        )
+        report = build_report(rows, _meta(
+            dry_run, provider, live_model, forecast, seed, split_name,
+            commitment, horizon, roles, usage, spent, cap_usd, stop,
+            network_called=False, budget=budget,
+        ))
+        if checkpoint_path:
+            write_report(report, checkpoint_path)
+        return report
     if stop["stop"] and stop["reason"] == "dollar_cap":
         report = build_report(rows, _meta(
             dry_run, provider, live_model, forecast, seed, split_name,
             commitment, horizon, roles, usage, spent, cap_usd, stop,
+            network_called=False, budget=budget,
         ))
         if checkpoint_path:
             write_report(report, checkpoint_path)
@@ -104,68 +123,106 @@ def run_experiment(
             pay = (fixture["id"], arm, role) in replay.cells
             if not pay:
                 continue
-        if not pay and not dry_run:
-            rows.append({
-                "episode": fixture["id"],
-                "family": fixture["family"],
-                "arm": arm,
-                "role": role,
-                "system": arm,
-                "harm": None,
-                "useful": None,
-                "schema_failure": 0,
-                "schema_error": None,
-                "harm_reachable": reachable,
-                "solver_harm_lower": None,
-                "solver_harm_upper": None,
-                "solver_witness": [],
-                "usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
-                "local_monitor_usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
-                "objective": ADVERSARY_OBJECTIVE if role == "adversary" else HONEST_OBJECTIVE,
-                "rules": __import__("dataclasses").asdict(probe_rules),
-                "channels": list(arm_config(arm, fixture["rules"])[1]),
-                "paid": False,
-                "skipped": "unreachable",
-            })
+        if budget is not None and pay and not budget.can_reserve():
+            rows.append(_skipped_cell(fixture, arm, role, probe_rules, reachable,
+                                      budget.deny_reason() or "dollar_cap"))
+            spent = budget.reserved_usd
+            stop = stop_status(
+                rows, len(planned), cap_usd, spent,
+                reason=budget.deny_reason() or "dollar_cap",
+            )
             if checkpoint_path:
                 write_report(build_report(rows, _meta(
                     dry_run, provider, live_model, forecast, seed, split_name,
                     commitment, horizon, roles, usage, spent, cap_usd, stop,
+                    network_called=True, budget=budget,
+                )), checkpoint_path)
+            break
+        if not pay and not dry_run:
+            rows.append(_skipped_cell(fixture, arm, role, probe_rules, reachable, "unreachable"))
+            if checkpoint_path:
+                write_report(build_report(rows, _meta(
+                    dry_run, provider, live_model, forecast, seed, split_name,
+                    commitment, horizon, roles, usage, spent, cap_usd, stop,
+                    network_called=(not dry_run and replay is None), budget=budget,
                 )), checkpoint_path)
             continue
         cell_dry = (dry_run or not pay) and replay is None
-        row = run_cell(fixture, arm, role, provider, cell_dry, horizon, transport,
-                       transcript_path=transcript_path, replay=replay)
+        try:
+            row = run_cell(fixture, arm, role, provider, cell_dry, horizon, transport,
+                           transcript_path=transcript_path, replay=replay, budget=budget)
+        except BudgetExceeded as exc:
+            rows.append(_skipped_cell(fixture, arm, role, probe_rules, reachable, exc.reason))
+            if budget is not None:
+                spent = budget.reserved_usd
+            stop = stop_status(rows, len(planned), cap_usd, spent, reason=exc.reason)
+            if checkpoint_path:
+                write_report(build_report(rows, _meta(
+                    dry_run, provider, live_model, forecast, seed, split_name,
+                    commitment, horizon, roles, usage, spent, cap_usd, stop,
+                    network_called=True, budget=budget,
+                )), checkpoint_path)
+            break
         row["paid"] = bool(pay and not dry_run)
         for key in ("input_tokens", "output_tokens", "reasoning_tokens", "retries"):
             usage[key] = usage.get(key, 0) + int(row["usage"].get(key, 0))
         cell_usd = usage_usd(model, row["usage"])
         forecast = round(forecast + cell_usd, 6)
         if row["paid"]:
-            spent = round(spent + cell_usd, 6)
+            spent = budget.reserved_usd if budget is not None else round(spent + cell_usd, 6)
         rows.append(row)
-        stop = stop_status(rows, len(planned), cap_usd, spent)
+        blocked = budget.blocked if budget is not None else None
+        stop = stop_status(rows, len(planned), cap_usd, spent, reason=blocked)
         if checkpoint_path:
             write_report(build_report(rows, _meta(
                 dry_run, provider, live_model, forecast, seed, split_name,
                 commitment, horizon, roles, usage, spent, cap_usd, stop,
+                network_called=(not dry_run and replay is None), budget=budget,
             )), checkpoint_path)
         if spent >= cap_usd and not dry_run:
             stop = stop_status(rows, len(planned), cap_usd, spent)
+            break
+        if blocked:
             break
     else:
         stop = stop_status(rows, len(planned), cap_usd, spent, finished=True)
     return build_report(rows, _meta(
         dry_run, provider, live_model, forecast, seed, split_name,
         commitment, horizon, roles, usage, spent, cap_usd, stop,
+        network_called=(not dry_run and replay is None), budget=budget,
     ))
 
 
-def _meta(dry_run, provider, live_model, forecast, seed, split_name, commitment, horizon, roles, usage, spent, cap_usd, stop):
+def _skipped_cell(fixture, arm, role, probe_rules, reachable, skipped):
+    return {
+        "episode": fixture["id"],
+        "family": fixture["family"],
+        "arm": arm,
+        "role": role,
+        "system": arm,
+        "harm": None,
+        "useful": None,
+        "schema_failure": 0,
+        "schema_error": None,
+        "harm_reachable": reachable,
+        "solver_harm_lower": None,
+        "solver_harm_upper": None,
+        "solver_witness": [],
+        "usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
+        "local_monitor_usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "retries": 0},
+        "objective": ADVERSARY_OBJECTIVE if role == "adversary" else HONEST_OBJECTIVE,
+        "rules": __import__("dataclasses").asdict(probe_rules),
+        "channels": list(arm_config(arm, fixture["rules"])[1]),
+        "paid": False,
+        "skipped": skipped,
+    }
+
+
+def _meta(dry_run, provider, live_model, forecast, seed, split_name, commitment, horizon, roles, usage, spent, cap_usd, stop, network_called=None, budget=None):
     return {
         "claim": "Experiment driver report. Dry-run uses ScriptedActor only." if dry_run else "Paid propensity run against pinned Luna/Haiku.",
         "dry_run": dry_run,
-        "network_called": bool(not dry_run),
+        "network_called": bool(not dry_run) if network_called is None else bool(network_called),
         "provider": "local" if dry_run else provider,
         "model": live_model,
         "forecast_usd": forecast,
@@ -178,6 +235,7 @@ def _meta(dry_run, provider, live_model, forecast, seed, split_name, commitment,
         "spent_usd": spent,
         "cap_usd": cap_usd,
         "stopped": stop,
+        "budget": budget,
     }
 
 
@@ -201,6 +259,7 @@ def main(argv=None):
     parser.add_argument("--provider", choices=("local", "anthropic", "openai"), default="local")
     parser.add_argument("--episodes", type=int, default=16)
     parser.add_argument("--cap-usd", type=float, default=DEFAULT_CAP_USD)
+    parser.add_argument("--max-requests", type=int, default=1024)
     parser.add_argument("--seed", default=SEED)
     parser.add_argument("--split", choices=("development", "evaluation"), default="evaluation")
     parser.add_argument("--role", choices=("honest", "adversary", "both"), default="both")
@@ -227,6 +286,7 @@ def main(argv=None):
         provider=args.provider if args.provider != "local" or not args.fake_transport else "anthropic",
         episodes=args.episodes,
         cap_usd=args.cap_usd,
+        max_requests=args.max_requests,
         dry_run=dry_run,
         seed=args.seed,
         split_name=args.split,

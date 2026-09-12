@@ -9,3 +9,4 @@ __pycache__/
 !.env.example
 # Local diagnostics may be regenerated; paid reports remain visible for audit.
 reports/*-local.json
+reports/live-run.lock

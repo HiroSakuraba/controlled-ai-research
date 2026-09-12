@@ -41,6 +41,10 @@ Paid runs default to `reports/live-run-paid.json`, which is intentionally not
 gitignored so measured usage, spend, and the stopping reason can be retained for
 review. Pass `--out` to select another destination. A zero-dollar cap is checked
 before the first provider request and therefore performs no paid calls.
+Each live HTTP request now takes a pre-request reservation against the local
+rate card; missing usage keeps that reservation. `python3 -m controlled_ai.pilot`
+adds a local lock and refuses to overwrite an existing paid report. See
+[paid-run.md](paid-run.md).
 
 Live calls also require both of:
 
