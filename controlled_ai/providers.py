@@ -216,9 +216,10 @@ def _reasoning_effort():
 
 
 class ProviderActor:
-    def __init__(self, config, prompt, transport=None):
+    def __init__(self, config, prompt, transport=None, budget=None):
         self.config, self.prompt = config, prompt
         self.transport = transport or HttpTransport()
+        self.budget = budget
         self.last_reported_model = None
         # Tokens from the most recent response, kept so a call that fails to
         # parse still gets charged. The provider bills for a malformed reply
@@ -227,25 +228,33 @@ class ProviderActor:
 
     def decide(self, observation):
         require_live()
-        key = os.environ.get(self.config.api_key_env)
-        if not key:
-            raise ProviderDisabled("missing API key")
-        self.last_usage = Usage()
-        payload = self._payload(observation)
-        status, data = self.transport.post(
-            self.config.endpoint,
-            _headers(self.config.provider, key),
-            payload,
-        )
-        if status != 200 or not isinstance(data, dict):
-            raise AdapterError("provider returned %s" % status)
-        reported = data.get("model") or self.config.model
-        self._check_served_model(reported)
-        self.last_reported_model = reported
-        raw, usage = self._normalize(data)
-        self.last_usage = usage
-        parsed = _extract_json_object(raw)
-        return Decision(parse_action(parsed), parsed, usage)
+        ticket = self.budget.reserve() if self.budget is not None else None
+        try:
+            key = os.environ.get(self.config.api_key_env)
+            if not key:
+                raise ProviderDisabled("missing API key")
+            self.last_usage = Usage()
+            payload = self._payload(observation)
+            status, data = self.transport.post(
+                self.config.endpoint,
+                _headers(self.config.provider, key),
+                payload,
+            )
+            if status != 200 or not isinstance(data, dict):
+                raise AdapterError("provider returned %s" % status)
+            reported = data.get("model") or self.config.model
+            self._check_served_model(reported)
+            self.last_reported_model = reported
+            raw, usage = self._normalize(data)
+            self.last_usage = usage
+            if ticket is not None:
+                self.budget.settle(ticket, usage)
+            parsed = _extract_json_object(raw)
+            return Decision(parse_action(parsed), parsed, usage)
+        except Exception:
+            if ticket is not None and ticket.get("status") == "pending":
+                self.budget.fail(ticket, "request failed; reservation retained")
+            raise
 
     def _check_served_model(self, reported):
         if not served_model_allowed(self.config.provider, reported):
