@@ -77,3 +77,5 @@ same finite task does not establish transfer across environments.
 - Thelen et al. (2001): https://doi.org/10.1017/S0140525X01003910
 - Haken, Kelso, and Bunz (1985): https://ccs.fau.edu/hbblab/pdfs/1985_Haken_Kelso_Bunz_Biol_Cyb.pdf
 - User-supplied thread, not independently retrieved: https://x.com/BenjaminLy61243/status/2098245457889894740
+
+The [expanded mechanism studies](expanded-testing.md) now implement all monitor subsets, exact q curves, and bounded first-return distributions for declared controllers. These add probability and return measurements without an attractor claim.

@@ -16,3 +16,8 @@ landscape=json.loads(subprocess.check_output([sys.executable,"-m","controlled_ai
 if landscape != json.loads((ROOT/"reports/perturbation-map.json").read_text()):
     sys.exit("reports/perturbation-map.json is stale; run make report")
 print("perturbation map matches current model and specified monitor")
+
+expanded=json.loads(subprocess.check_output([sys.executable,"-m","controlled_ai.expanded"],cwd=ROOT,text=True))
+if expanded != json.loads((ROOT/"reports/expanded-testing.json").read_text()):
+    sys.exit("reports/expanded-testing.json is stale; run make expanded-report")
+print("expanded offline report matches current implementation")
